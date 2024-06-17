@@ -51,6 +51,11 @@ jobs:
       - name: Start SSM Port Forwarding
         id: port_forward
         run: |
+          echo "Starting SSM session..."
           aws ssm start-session --target ${{ env.INSTANCE_ID }}
+          if [ $? -ne 0 ]; then
+            echo "Failed to start SSM session"
+            exit 1
+          fi
 
 
