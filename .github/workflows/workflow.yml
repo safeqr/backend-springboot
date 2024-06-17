@@ -18,6 +18,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+
       - name: Create application-local.properties file
         run: |
           echo "spring.datasource.url=${{ secrets.DB_URL }}" >> src/main/resources/application-local.properties
