@@ -48,28 +48,18 @@ jobs:
           INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=safeqr-ec2" --query "Reservations[0].Instances[0].InstanceId" --output text)
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV 
 
-      - name: Start `nc` on EC2 to Listen and Save File
+      - name: Upload JAR to S3
         run: |
-          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Start netcat to listen and save file" --parameters 'commands=["sudo nc -l -p 1234 > /home/app-0.0.1-SNAPSHOT.jar"]'
+          aws s3 cp target/app-0.0.1-SNAPSHOT.jar s3://s3-bucket-safeqr/
 
-      - name: Start SSM Port Forwarding
-        id: start-ssm-port-forwarding
+      - name: Get Presigned URL
+        id: presigned_url
         run: |
-          aws ssm start-session --target ${{ env.INSTANCE_ID }} --document-name AWS-StartPortForwardingSession --parameters '{"portNumber":["1234"],"localPortNumber":["1234"]}' &
-          sleep 10
+          URL=$(aws s3 presign s3://s3-bucket-safeqr/app-0.0.1-SNAPSHOT.jar --expires-in 3600)
+          echo "PRESIGNED_URL=$URL" >> $GITHUB_ENV
 
-      - name: Install netcat locally
-        run: sudo apt-get install -y netcat
-
-      - name: Send File to EC2
+      - name: Download and Verify JAR on EC2
         run: |
-          echo "Sending JAR file to EC2 instance..."
-          nc -w 3 127.0.0.1 1234 < target/app-0.0.1-SNAPSHOT.jar
-        continue-on-error: false
-
-      - name: Verify File on EC2
-        run: |
-          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Verify JAR file" --parameters 'commands=["ls -l /home/app-0.0.1-SNAPSHOT.jar"]'
-      
-
+          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Download JAR file" --parameters 'commands=["curl -o /home/ec2-user/app-0.0.1-SNAPSHOT.jar ${{ env.PRESIGNED_URL }}", "ls -l /home/ec2-user/app-0.0.1-SNAPSHOT.jar"]'
+    
 
