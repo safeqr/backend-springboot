@@ -52,11 +52,5 @@ jobs:
         id: port_forward
         run: |
           aws ssm start-session --target ${{ env.INSTANCE_ID }}
-        env:
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ steps.configure-aws-credentials.outputs.aws_access_key_id }}
-          AWS_SECRET_ACCESS_KEY: ${{ steps.configure-aws-credentials.outputs.aws_secret_access_key }}
-          AWS_SESSION_TOKEN: ${{ steps.configure-aws-credentials.outputs.aws_session_token }}
 
 
