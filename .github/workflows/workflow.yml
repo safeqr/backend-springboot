@@ -35,9 +35,13 @@ jobs:
       - name: Build with Maven
         run: mvn -B package --file pom.xml
 
-      - name: Split JAR into Chunks
+      - name: Split and Encode JAR into Chunks
         run: |
-          split -b 10M target/app-0.0.1-SNAPSHOT.jar target/chunk_
+          mkdir -p chunks
+          split -b 10M target/app-0.0.1-SNAPSHOT.jar chunks/chunk_
+          for file in chunks/chunk_*; do
+          base64 $file > ${file}.b64
+          done
 
       - name: Configure AWS Credentials
         id: configure-aws-credentials
@@ -54,8 +58,8 @@ jobs:
 
       - name: Upload Chunks to EC2
         run: |
-          for file in target/chunk_*; do
-            aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Upload chunk" --parameters commands="echo \"$(cat $file)\" > /home/ec2-user/$(basename $file)"
+          for file in chunks/chunk_*.b64; do
+            aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Upload chunk" --parameters commands="echo $(cat $file) | base64 --decode > /home/ec2-user/$(basename ${file%.b64})"
           done
 
       - name: Reassemble Chunks on EC2
@@ -65,4 +69,3 @@ jobs:
       - name: Verify File on EC2
         run: |
           aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Verify JAR file" --parameters 'commands=["ls -l /home/ec2-user/app-0.0.1-SNAPSHOT.jar"]'
-
