@@ -17,6 +17,7 @@ public class UserController {
     public ResponseEntity<String> version() {
         System.out.println(userService.getUserByEmail());
         return ResponseEntity.ok("SafeQR v1.0.0");
+
     }
 
 }
