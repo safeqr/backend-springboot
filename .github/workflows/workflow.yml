@@ -50,7 +50,7 @@ jobs:
 
       - name: Start `nc` on EC2 to Listen and Save File
         run: |
-          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Start netcat to listen and save file" --parameters 'commands=["sudo nc -l -p 1234 > /home/app-0.0.1-SNAPSHOT.jar"]'
+          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Start netcat to listen and save file" --parameters 'commands=["sudo nc -l 1234 > /home/app-0.0.1-SNAPSHOT.jar"]'
 
       - name: Start SSM Port Forwarding
         id: start-ssm-port-forwarding
