@@ -44,5 +44,19 @@ jobs:
 
       - name: Get Instance ID
         id: get_instance_id
-        run: aws ssm start-session --target i-0fc1eb77776dc1758
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=safeqr-ec2" --query "Reservations[0].Instances[0].InstanceId" --output text)
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV 
+
+      - name: Start SSM Port Forwarding
+        id: port_forward
+        run: |
+          aws ssm start-session --target ${{ env.INSTANCE_ID }}
+        env:
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ steps.configure-aws-credentials.outputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ steps.configure-aws-credentials.outputs.aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ steps.configure-aws-credentials.outputs.aws_session_token }}
+
 
