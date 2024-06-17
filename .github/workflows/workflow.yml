@@ -60,6 +60,6 @@ jobs:
 
       - name: Download and Verify JAR on EC2
         run: |
-          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Download JAR file" --parameters 'commands=["curl -o /home/ec2-user/app-0.0.1-SNAPSHOT.jar ${{ env.PRESIGNED_URL }}", "ls -l /home/ec2-user/app-0.0.1-SNAPSHOT.jar"]'
+          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Download JAR file" --parameters 'commands=["curl -o /home/app-0.0.1-SNAPSHOT.jar ${{ env.PRESIGNED_URL }}", "ls -l /home/app-0.0.1-SNAPSHOT.jar"]'
     
 
