@@ -54,14 +54,14 @@ jobs:
       - name: Download JAR from S3 to EC2
         run: |
           aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Download JAR from S3" --parameters 'commands=[
-           "aws s3 cp s3://s3-bucket-safeqr/app-0.0.1-SNAPSHOT.jar /home/app-0.0.1-SNAPSHOT.jar",
-           "ls -l /home/app-0.0.1-SNAPSHOT.jar"
+           "aws s3 cp s3://s3-bucket-safeqr/app-0.0.1-SNAPSHOT.jar /home/ssm-user/app-0.0.1-SNAPSHOT.jar",
+           "ls -l /home/ssm-user/app-0.0.1-SNAPSHOT.jar"
           ]'
 
       - name: Create and Start Systemd Service
         run: |
           aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Create and start service" --parameters 'commands=[
-              "sudo bash -c '\''cat <<EOF > /etc/systemd/system/springboot-app.service\n[Unit]\nDescription=Spring Boot Application\nAfter=network.target\n\n[Service]\nUser=ssm-user\nExecStart=/usr/bin/java -jar /home/app-0.0.1-SNAPSHOT.jar\nSuccessExitStatus=143\nRestart=always\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\nEOF'\''",
+              "sudo bash -c '\''cat <<EOF > /etc/systemd/system/springboot-app.service\n[Unit]\nDescription=Spring Boot Application\nAfter=network.target\n\n[Service]\nUser=ssm-user\nExecStart=/usr/bin/java -jar /home/ssm-user/app-0.0.1-SNAPSHOT.jar\nSuccessExitStatus=143\nRestart=always\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\nEOF'\''",
               "sudo systemctl daemon-reload",
               "sudo systemctl enable springboot-app",
               "sudo systemctl start springboot-app",
