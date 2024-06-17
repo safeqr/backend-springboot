@@ -49,13 +49,23 @@ jobs:
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV 
 
       - name: Start SSM Port Forwarding
-        id: port_forward
+        id: start-ssm-port-forwarding
         run: |
-          echo "Starting SSM session..."
-          aws ssm start-session --target ${{ env.INSTANCE_ID }}
-          if [ $? -ne 0 ]; then
-            echo "Failed to start SSM session"
-            exit 1
-          fi
+          aws ssm start-session --target ${{ env.INSTANCE_ID }} --document-name AWS-StartPortForwardingSession --parameters '{"portNumber":["1234"],"localPortNumber":["1234"]}' &
+          sleep 10
+
+      - name: Install netcat locally
+        run: sudo apt-get install -y netcat
+
+      - name: Send File to EC2
+        run: |
+          echo "Sending JAR file to EC2 instance..."
+          nc -w 3 127.0.0.1 1234 < target/app-0.0.1-SNAPSHOT.jar
+        continue-on-error: false
+
+      - name: Verify File on EC2
+        run: |
+          aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Verify JAR file" --parameters 'commands=["ls -l /tmp/app-0.0.1-SNAPSHOT.jar"]'
+      
 
 
