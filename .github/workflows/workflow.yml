@@ -17,5 +17,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+
+      - name: Create application-local.properties file
+        run: |
+          echo "spring.datasource.url=${{ secrets.DB_URL }}" >> src/main/resources/application-local.properties
+          echo "spring.datasource.username=${{ secrets.DB_USERNAME }}" >> src/main/resources/application-local.properties
+          echo "spring.datasource.password=${{ secrets.DB_PASSWORD }}" >> src/main/resources/application-local.properties
+          echo "spring.datasource.driver-class-name=${{ secrets.DB_DRIVER }}" >> src/main/resources/application-local.properties
+          echo "spring.jpa.hibernate.ddl-auto=update" >> src/main/resources/application-local.properties
+          echo "spring.jpa.show-sql=true" >> src/main/resources/application-local.properties
+
       - name: Build with Maven
         run: mvn -B package --file pom.xml
+
