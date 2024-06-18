@@ -19,6 +19,7 @@ target/
 *.iml
 *.ipr
 src/main/resources/application-local.properties
+update_env_var.sh
 
 ### NetBeans ###
 /nbproject/private/
