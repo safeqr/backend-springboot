@@ -22,14 +22,21 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Create application-local.properties file
+      - name: Set environment variables
         run: |
-          echo "spring.datasource.url=${{ secrets.DB_URL }}" >> src/main/resources/application-local.properties
-          echo "spring.datasource.username=${{ secrets.DB_USERNAME }}" >> src/main/resources/application-local.properties
-          echo "spring.datasource.password=${{ secrets.DB_PASSWORD }}" >> src/main/resources/application-local.properties
-          echo "spring.datasource.driver-class-name=${{ secrets.DB_DRIVER }}" >> src/main/resources/application-local.properties
-          echo "spring.jpa.hibernate.ddl-auto=update" >> src/main/resources/application-local.properties
-          echo "spring.jpa.show-sql=true" >> src/main/resources/application-local.properties
+          echo "SERVER_DB_URL=${{ secrets.DB_URL }}" >> $GITHUB_ENV
+          echo "SERVER_DB_USERNAME=${{ secrets.DB_USERNAME }}" >> $GITHUB_ENV
+          echo "SERVER_DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "SERVER_DB_DRIVER_CLASS_NAME=${{ secrets.DB_DRIVER }}" >> $GITHUB_ENV
+          echo "SERVER_DB_DIALECT=${{ secrets.SERVER_DB_DIALECT }}" >> $GITHUB_ENV
+          echo "HTTP_PORT=${{ secrets.HTTP_PORT }}" >> $GITHUB_ENV
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_KEY_STORE_TYPE=${{ secrets.SERVER_SSL_KEY_STORE_TYPE }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_KEY_STORE_LOCATION=${{ secrets.SERVER_SSL_KEY_STORE_LOCATION }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_KEY_STORE_PASSWORD=${{ secrets.SERVER_SSL_KEY_STORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_KEY_ALIAS=${{ secrets.SERVER_SSL_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_TRUST_STORE_LOCATION=${{ secrets.SERVER_SSL_TRUST_STORE_LOCATION }}" >> $GITHUB_ENV
+          echo "SERVER_SSL_TRUST_STORE_PASSWORD=${{ secrets.SERVER_SSL_TRUST_STORE_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
