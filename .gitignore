@@ -20,6 +20,8 @@ target/
 *.ipr
 src/main/resources/application-local.properties
 update_env_var.sh
+springboot-app.service
+springboot-app.var
 
 ### NetBeans ###
 /nbproject/private/
