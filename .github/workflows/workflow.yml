@@ -69,6 +69,7 @@ jobs:
           aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} --document-name "AWS-RunShellScript" --comment "Create and start service" --parameters 'commands=[
             "aws s3 cp s3://s3-bucket-safeqr/springboot-app.service /etc/systemd/system/springboot-app.service",
             "aws s3 cp s3://s3-bucket-safeqr/springboot-app.var /etc/systemd/system/springboot-app.var",
+            "sudo systemctl stop springboot-app",
             "sudo systemctl daemon-reload",
             "sudo systemctl enable springboot-app",
             "sudo systemctl start springboot-app",
