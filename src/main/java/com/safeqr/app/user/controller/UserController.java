@@ -17,7 +17,7 @@ public class UserController {
     UserService userService;
     @GetMapping(value = "/version", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> version() {
-        //System.out.println(userService.getUserByEmail());
+        System.out.println(userService.getUserByEmail());
         System.out.println("Health Check");
         return ResponseEntity.ok(Map.of("version","SafeQR v1.0.2"));
     }
