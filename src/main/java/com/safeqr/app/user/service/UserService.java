@@ -14,9 +14,9 @@ public class UserService {
     public String getUserByEmail() {
 
         // Retrieve the user by email
-        UserEntity retrievedUser = userRepository.findByEmail("test.user@example.com");
+        UserEntity retrievedUser = userRepository.findByEmail("piggyinu@gmail.com");
         if (retrievedUser != null) {
-            return "User found: " + retrievedUser.getFirstname() + " " + retrievedUser.getLastname();
+            return "User found: " + retrievedUser.getName();
         }
         return "User not found";
     }
