@@ -19,7 +19,7 @@ public class UserController {
     public ResponseEntity<Map<String, String>> version() {
         // System.out.println(userService.getUserByEmail());
         System.out.println("Health Check");
-        return ResponseEntity.ok(Map.of("version","SafeQR v1.0.2"))
+        return ResponseEntity.ok(Map.of("version","SafeQR v1.0.2"));
     }
 
 }
