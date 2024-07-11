@@ -37,6 +37,8 @@ jobs:
           echo "SERVER_SSL_KEY_ALIAS=${{ secrets.SERVER_SSL_KEY_ALIAS }}" >> $GITHUB_ENV
           echo "SERVER_SSL_TRUST_STORE_LOCATION=${{ secrets.SERVER_SSL_TRUST_STORE_LOCATION }}" >> $GITHUB_ENV
           echo "SERVER_SSL_TRUST_STORE_PASSWORD=${{ secrets.SERVER_SSL_TRUST_STORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "GOOGLE_SAFE_BROWSING_API_KEY=${{ secrets.GOOGLE_SAFE_BROWSING_API_KEY }}" >> $GITHUB_ENV
+          echo "VIRUSTOTAL_API_KEY=${{ secrets.VIRUSTOTAL_API_KEY }}" >> $GITHUB_ENV
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
