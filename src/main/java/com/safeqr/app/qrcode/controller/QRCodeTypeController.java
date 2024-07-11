@@ -61,4 +61,5 @@ public class QRCodeTypeController {
     public ResponseEntity<RedirectCountResponse> checkRedirects(@RequestBody QRCodePayload payload) {
         return ResponseEntity.ok(redirectCountService.countRedirects(payload).block());
     }
+
 }
