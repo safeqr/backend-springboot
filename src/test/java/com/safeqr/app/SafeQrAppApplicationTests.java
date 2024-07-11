@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SafeQrAppApplicationTests {
+public class SafeQrAppApplicationTests {
 
 	@Test
-	void contextLoads() {
+	public void contextLoads() {
 	}
-
 }
