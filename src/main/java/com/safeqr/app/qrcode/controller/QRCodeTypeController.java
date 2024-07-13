@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/api/qrcodetypes")
+@RequestMapping("/api/v1/qrcodetypes")
 public class QRCodeTypeController {
 
     @Autowired
