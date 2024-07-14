@@ -12,7 +12,6 @@ public class QRCodeType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String type;
     private String description;
     private String prefix;

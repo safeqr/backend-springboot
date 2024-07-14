@@ -1,22 +1,30 @@
 package com.safeqr.app.qrcode.controller;
 
+import com.safeqr.app.constants.APIConstants;
+import com.safeqr.app.constants.CommonConstants;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
+import com.safeqr.app.qrcode.dto.response.ScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeType;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
 import com.safeqr.app.qrcode.service.RedirectCountService;
 import com.safeqr.app.qrcode.service.URLVerificationService;
 import com.safeqr.app.qrcode.service.VirusTotalService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/qrcodetypes")
+@RequestMapping(APIConstants.API_VERSION)
 public class QRCodeTypeController {
+    private static final Logger logger = LoggerFactory.getLogger(QRCodeTypeService.class);
 
     @Autowired
     private QRCodeTypeService qrCodeTypeService;
@@ -30,23 +38,30 @@ public class QRCodeTypeController {
     @Autowired
     private RedirectCountService redirectCountService;
 
-    @GetMapping
+    @GetMapping(value = APIConstants.API_URL_QRCODE_GET_ALL)
     public ResponseEntity<List<QRCodeType>> getAllTypes() {
         return ResponseEntity.ok(qrCodeTypeService.getAllTypes());
     }
 
-    @PostMapping("/detect")
+    @PostMapping(value = APIConstants.API_URL_QRCODE_SCAN, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ScanResponse> scanQRCode(@RequestBody QRCodePayload payload,
+                                                   @RequestHeader(required = false, name = CommonConstants.HEADER_USER_ID) String userId) {
+        logger.info("Invoking scan endpoint");
+        return ResponseEntity.ok(qrCodeTypeService.scanQRCode(userId, payload));
+    }
+
+    @PostMapping(APIConstants.API_URL_QRCODE_DETECT)
     public ResponseEntity<String> detectType(@RequestBody QRCodePayload payload) {
         return ResponseEntity.ok(qrCodeTypeService.detectType(payload).block());
     }
 
-    @PostMapping("/verifyURL")
+    @PostMapping(APIConstants.API_URL_QRCODE_VERIFY_URL)
     public ResponseEntity<URLVerificationResponse> verifyURL(@RequestBody QRCodePayload payload) {
         URLVerificationResponse response = urlVerificationService.verifyURL(payload);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/virusTotalCheck")
+    @PostMapping(APIConstants.API_URL_QRCODE_VIRUS_TOTAL_CHECK)
     public ResponseEntity<Boolean> virusTotalCheck(@RequestBody QRCodePayload payload) {
         try {
             String analysisId = virusTotalService.scanURL(payload);
@@ -57,7 +72,7 @@ public class QRCodeTypeController {
         }
     }
 
-    @PostMapping("/checkRedirects")
+    @PostMapping(APIConstants.API_URL_QRCODE_REDIRECT_COUNT)
     public ResponseEntity<RedirectCountResponse> checkRedirects(@RequestBody QRCodePayload payload) {
         return ResponseEntity.ok(redirectCountService.countRedirects(payload).block());
     }

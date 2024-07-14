@@ -1,10 +1,18 @@
 
 package com.safeqr.app.qrcode.service;
 
+import com.safeqr.app.constants.CommonConstants;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
+import com.safeqr.app.qrcode.dto.response.ScanResponse;
+import com.safeqr.app.qrcode.entity.QRCode;
 import com.safeqr.app.qrcode.entity.QRCodeType;
+import com.safeqr.app.qrcode.entity.ScanHistory;
+import com.safeqr.app.qrcode.repository.QRCodeRepository;
 import com.safeqr.app.qrcode.repository.QRCodeTypeRepository;
+import com.safeqr.app.qrcode.repository.ScanHistoryRepository;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,22 +22,71 @@ import java.util.List;
 
 @Service
 public class QRCodeTypeService {
+    private static final Logger logger = LoggerFactory.getLogger(QRCodeTypeService.class);
 
     @Autowired
     private QRCodeTypeRepository qrCodeTypeRepository;
+    @Autowired
+    private ScanHistoryRepository scanHistoryRepository;
+    @Autowired
+    private QRCodeRepository qrCodeRepository;
 
     @Autowired
     private SafeBrowsingService safeBrowsingService;
 
     private List<QRCodeType> configs;
+    private QRCodeType defaultQRCodeType;
 
     @PostConstruct
     public void loadQRCodeTypes() {
+        // Fetch all QR Code Types from the database
         configs = qrCodeTypeRepository.findAll();
+        // Set the default QR Code Type
+        defaultQRCodeType = configs.stream()
+                .filter(config -> config.getType().equals(CommonConstants.DEFAULT_QR_CODE_TYPE))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<QRCodeType> getAllTypes() {
         return configs;
+    }
+
+    public ScanResponse scanQRCode(String userId, QRCodePayload payload) {
+        String data = payload.getData();
+        logger.info("scanQRCode: userId={}, data={}", userId, data);
+
+        // Get the QR Code Type
+        QRCodeType qrType = getQRCodeType(data);
+
+        // Insert the QR Code into main qrcode table
+        QRCode scannedQR = qrCodeRepository.save(QRCode.builder()
+                .userId(userId)
+                .contents(data)
+                .qrCodeTypeId(qrType.getId())
+                .build());
+        // Insert qrcode into respective table based on type
+
+        // Insert into Scan History table if userId is not null
+        logger.info("scanQRCode: scannedQR new ID={}", scannedQR.getId());
+        if (userId != null) {
+            scanHistoryRepository.save(ScanHistory.builder()
+                    .qrCodeId(scannedQR.getId())
+                    .userId(userId)
+                    .scanStatus(ScanHistory.ScanStatus.ACTIVE)
+                    .build());
+        }
+
+        return ScanResponse.builder()
+                .contents(data)
+                .qrType(qrType.getType())
+                .build();
+    }
+    private QRCodeType getQRCodeType(String data) {
+        return configs.stream()
+                .filter(config -> data.toLowerCase().startsWith(config.getPrefix().toLowerCase()))
+                .findFirst()
+                .orElse(defaultQRCodeType);
     }
 
     public Mono<String> detectType(QRCodePayload payload) {

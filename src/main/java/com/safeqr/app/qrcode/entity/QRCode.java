@@ -2,6 +2,7 @@
 package com.safeqr.app.qrcode.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "qr_code", schema = "safeqr")
 @Data
+@Builder
 public class QRCode {
 
     @Id
@@ -18,10 +20,8 @@ public class QRCode {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "qr_code_type_id", nullable = false)
-    private QRCodeType qrCodeType;
-
+    @Column(name = "qr_code_type_id", nullable = false)
+    private Long qrCodeTypeId;
     private String userId;
     private String contents;
 
