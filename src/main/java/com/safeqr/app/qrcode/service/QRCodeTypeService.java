@@ -4,6 +4,7 @@ package com.safeqr.app.qrcode.service;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.entity.QRCodeType;
 import com.safeqr.app.qrcode.repository.QRCodeTypeRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -20,13 +21,19 @@ public class QRCodeTypeService {
     @Autowired
     private SafeBrowsingService safeBrowsingService;
 
+    private List<QRCodeType> configs;
+
+    @PostConstruct
+    public void loadQRCodeTypes() {
+        configs = qrCodeTypeRepository.findAll();
+    }
+
     public List<QRCodeType> getAllTypes() {
-        return qrCodeTypeRepository.findAll();
+        return configs;
     }
 
     public Mono<String> detectType(QRCodePayload payload) {
         String data = payload.getData();
-        List<QRCodeType> configs = qrCodeTypeRepository.findAll();
 
         for (QRCodeType config : configs) {
             if (data.startsWith(config.getPrefix())) {
