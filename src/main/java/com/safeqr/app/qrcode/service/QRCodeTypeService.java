@@ -17,8 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.net.URL;
 
 @Service
 public class QRCodeTypeService {
@@ -64,8 +69,11 @@ public class QRCodeTypeService {
                 .userId(userId)
                 .contents(data)
                 .qrCodeTypeId(qrType.getId())
+                .createdAt(LocalDateTime.now())
                 .build());
+
         // Insert qrcode into respective table based on type
+        insertIntoRespectiveTable(scannedQR);
 
         // Insert into Scan History table if userId is not null
         logger.info("scanQRCode: scannedQR new ID={}", scannedQR.getId());
@@ -78,8 +86,8 @@ public class QRCodeTypeService {
         }
 
         return ScanResponse.builder()
-                .contents(data)
-                .qrType(qrType.getType())
+                .scannedQRCode(scannedQR)
+                .qrCodeType(qrType)
                 .build();
     }
     private QRCodeType getQRCodeType(String data) {
@@ -87,6 +95,57 @@ public class QRCodeTypeService {
                 .filter(config -> data.toLowerCase().startsWith(config.getPrefix().toLowerCase()))
                 .findFirst()
                 .orElse(defaultQRCodeType);
+    }
+    private void insertIntoRespectiveTable(QRCode qrCode) {
+        try {
+            String url = qrCode.getContents();
+            Map<String, Object> breakdown = breakdownURL(url);
+            breakdown.forEach((key, value) -> logger.info("{}: {}", key, value));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+    }
+    // Function to breakdown URL into subdomain, domain, topLevelDomain, query params, fragment
+    public Map<String, Object> breakdownURL(String urlString) throws MalformedURLException {
+        URL url = new URL(urlString);
+        Map<String, Object> breakdown = new HashMap<>();
+
+        String host = url.getHost();
+        String[] hostParts = host.split("\\.");
+
+        String subdomain = "";
+        String domain = "";
+        String topLevelDomain = "";
+
+        if (hostParts.length >= 2) {
+            topLevelDomain = hostParts[hostParts.length - 1];
+            domain = hostParts[hostParts.length - 2];
+            if (hostParts.length > 2) {
+                subdomain = String.join(".", java.util.Arrays.copyOfRange(hostParts, 0, hostParts.length - 2));
+            }
+        }
+
+        breakdown.put("Subdomain", subdomain.isEmpty() ? "None" : subdomain);
+        breakdown.put("Domain", domain);
+        breakdown.put("Top Level Domain", topLevelDomain);
+
+        String query = url.getQuery();
+        if (query != null) {
+            Map<String, String> queryParams = new HashMap<>();
+            for (String param : query.split("&")) {
+                String[] pair = param.split("=");
+                queryParams.put(pair[0], pair.length > 1 ? pair[1] : "");
+            }
+            breakdown.put("Query Parameters", queryParams);
+        } else {
+            breakdown.put("Query Parameters", "None");
+        }
+
+        String fragment = url.getRef();
+        breakdown.put("Fragment", fragment != null ? fragment : "None");
+
+        return breakdown;
     }
 
     public Mono<String> detectType(QRCodePayload payload) {

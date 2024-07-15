@@ -1,6 +1,7 @@
 
 package com.safeqr.app.qrcode.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,10 +11,15 @@ import lombok.Data;
 public class QRCodeType {
 
     @Id
+    @JsonIgnore
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String type;
     private String description;
+
+    @JsonIgnore
     private String prefix;
+
+    @JsonIgnore
     private String tableName;
 }
