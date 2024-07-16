@@ -1,6 +1,7 @@
 package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -16,7 +19,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class URL {
+public class QRCodeURL {
 
     @Id
     @JsonIgnore
@@ -25,6 +28,7 @@ public class URL {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
+    @JsonIgnore
     @Column(name = "qr_code_id")
     private UUID qrCodeId;
 
@@ -34,9 +38,15 @@ public class URL {
 
     private String topLevelDomain;
 
+    private String path;
+
+    @JsonProperty
     private String query;
 
     private String fragment;
 
     private int redirect = 0;
+
+    @Column(name = "redirect_chain")
+    private List<String> redirectChain;
 }

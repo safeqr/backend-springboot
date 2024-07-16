@@ -5,7 +5,7 @@ import com.safeqr.app.constants.CommonConstants;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
-import com.safeqr.app.qrcode.dto.response.ScanResponse;
+import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeType;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
 import com.safeqr.app.qrcode.service.RedirectCountService;
@@ -44,8 +44,8 @@ public class QRCodeTypeController {
     }
 
     @PostMapping(value = APIConstants.API_URL_QRCODE_SCAN, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ScanResponse> scanQRCode(@RequestBody QRCodePayload payload,
-                                                   @RequestHeader(required = false, name = CommonConstants.HEADER_USER_ID) String userId) {
+    public ResponseEntity<BaseScanResponse> scanQRCode(@RequestBody QRCodePayload payload,
+                                                       @RequestHeader(required = false, name = CommonConstants.HEADER_USER_ID) String userId) {
         logger.info("Invoking scan endpoint");
         return ResponseEntity.ok(qrCodeTypeService.scanQRCode(userId, payload));
     }
