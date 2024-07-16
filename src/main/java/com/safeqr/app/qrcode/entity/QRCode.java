@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,15 +21,16 @@ import java.util.UUID;
 public class QRCode {
 
     @Id
-    @JsonIgnore
     @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @UuidGenerator
     @Column(updatable = false, nullable = false)
     private UUID id;
 
     @JsonIgnore
     @Column(name = "qr_code_type_id", nullable = false)
     private Long qrCodeTypeId;
+
+    @JsonIgnore
     private String userId;
     private String contents;
 

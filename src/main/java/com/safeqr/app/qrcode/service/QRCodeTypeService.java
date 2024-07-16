@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,6 +45,9 @@ public class QRCodeTypeService {
     @Autowired
     private URLRepository urlRepository;
 
+
+    @Autowired
+    private URLVerificationService urlVerificationService;
     @Autowired
     private SafeBrowsingService safeBrowsingService;
 
@@ -98,108 +102,28 @@ public class QRCodeTypeService {
                 .findFirst()
                 .orElse(defaultQRCodeType);
     }
+
     private BaseScanResponse insertIntoRespectiveTable(QRCode qrCode, QRCodeType qrCodeType) {
+        String contents = qrCode.getContents();
         try {
-            String url = qrCode.getContents();
-            QRCodeURL urlObj = breakdownURL(url);
+            QRCodeURL urlObj = urlVerificationService.breakdownURL(contents);
+            List<String> redirectChain = urlVerificationService.countAndTrackRedirects(contents);
             urlObj.setQrCodeId(qrCode.getId());
-            List<String> redirectChain = countAndTrackRedirects(url);
-            logger.info("Redirect chain: {}", redirectChain);
-            for (int i = 0; i < redirectChain.size(); i++) {
-                logger.info((i == 0 ? "Initial URL: " : "Redirect #" + i + ": ") + redirectChain.get(i));
-            }
             urlObj.setRedirect(redirectChain.size() - 1);
             urlObj.setRedirectChain(redirectChain);
+
+            // Insert into URL table
             urlRepository.save(urlObj);
 
-            return URLResponse.builder()
-                    .scannedQRCode(qrCode)
-                    .qrCodeType(qrCodeType)
-                    .qrCodeURL(urlObj)
-                    .build();
-        } catch (IOException e) {
+            return URLResponse.builder().scannedQRCode(qrCode).qrCode(qrCodeType).details(urlObj).build();
+        } catch (IOException | URISyntaxException e) {
             logger.error("Error: ", e);
         }
 
         return BaseScanResponse.builder()
                 .scannedQRCode(qrCode)
-                .qrCodeType(qrCodeType)
+                .qrCode(qrCodeType)
                 .build();
-    }
-    // Function to breakdown URL into subdomain, domain, topLevelDomain, query params, fragment
-    public QRCodeURL breakdownURL(String urlString) throws MalformedURLException {
-        URL url = new URL(urlString);
-        QRCodeURL urlObj = new QRCodeURL();
-
-        String host = url.getHost();
-        String[] hostParts = host.split("\\.");
-        String subdomain = "";
-
-        if (hostParts.length >= 2) {
-            urlObj.setTopLevelDomain(hostParts[hostParts.length - 1]);
-            urlObj.setDomain(hostParts[hostParts.length - 2]);
-            if (hostParts.length > 2) {
-                subdomain = String.join(".", java.util.Arrays.copyOfRange(hostParts, 0, hostParts.length - 2));
-            }
-        }
-
-        urlObj.setSubdomain(subdomain);
-
-        String path = url.getPath();
-        urlObj.setPath(path.isEmpty() ? "/" : path);
-
-        String query = url.getQuery();
-        Map<String, String> queryParams = new HashMap<>();
-        if (query != null) {
-            for (String param : query.split("&")) {
-                String[] pair = param.split("=");
-                queryParams.put(pair[0], pair.length > 1 ? pair[1] : "");
-            }
-            logger.info("queryParams: {}", queryParams);
-        }
-        urlObj.setQuery(queryParams.toString());
-
-        String fragment = url.getRef();
-
-        urlObj.setFragment(fragment);
-
-        return urlObj;
-    }
-
-    List<String> countAndTrackRedirects(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        List<String> redirectChain = new ArrayList<>();
-        redirectChain.add(urlString); // Add the initial URL to the chain
-        boolean redirected;
-        int redirectCount = 0;
-
-        do {
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setInstanceFollowRedirects(false);
-
-            int responseCode = connection.getResponseCode();
-            redirected = (responseCode >= 300 && responseCode < 400);
-
-            if (redirected) {
-                String newUrl = connection.getHeaderField("Location");
-                if (newUrl == null) {
-                    break;
-                }
-                // Handle relative URLs
-                if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
-                    newUrl = new URL(url, newUrl).toString();
-                }
-                url = new URL(newUrl);
-                redirectChain.add(newUrl);
-                redirectCount++;
-                logger.info("Redirect #{}: {}",redirectCount, newUrl);
-            }
-
-            connection.disconnect();
-        } while (redirected && redirectCount < CommonConstants.MAX_REDIRECT_COUNT);
-
-        return redirectChain;
     }
 
     public Mono<String> detectType(QRCodePayload payload) {

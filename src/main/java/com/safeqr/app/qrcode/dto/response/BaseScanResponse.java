@@ -13,5 +13,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class BaseScanResponse {
     private QRCode scannedQRCode;
-    private QRCodeType qrCodeType;
+    private QRCodeType qrCode;
 }

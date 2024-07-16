@@ -10,5 +10,5 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 public final class URLResponse extends BaseScanResponse{
-    private QRCodeURL qrCodeURL;
+    private QRCodeURL details;
 }
