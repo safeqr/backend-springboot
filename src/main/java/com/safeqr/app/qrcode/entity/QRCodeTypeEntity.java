@@ -8,7 +8,7 @@ import lombok.Data;
 @Entity
 @Table(name = "qr_code_types", schema = "safeqr")
 @Data
-public class QRCodeType {
+public class QRCodeTypeEntity {
 
     @Id
     @JsonIgnore

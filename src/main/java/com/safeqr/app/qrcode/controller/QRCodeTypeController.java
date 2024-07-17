@@ -6,7 +6,7 @@ import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
-import com.safeqr.app.qrcode.entity.QRCodeType;
+import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
 import com.safeqr.app.qrcode.service.RedirectCountService;
 import com.safeqr.app.qrcode.service.URLVerificationService;
@@ -39,7 +39,7 @@ public class QRCodeTypeController {
     private RedirectCountService redirectCountService;
 
     @GetMapping(value = APIConstants.API_URL_QRCODE_GET_ALL)
-    public ResponseEntity<List<QRCodeType>> getAllTypes() {
+    public ResponseEntity<List<QRCodeTypeEntity>> getAllTypes() {
         return ResponseEntity.ok(qrCodeTypeService.getAllTypes());
     }
 

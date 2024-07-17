@@ -3,7 +3,7 @@ package com.safeqr.app.qrcode.service;
 import com.safeqr.app.constants.CommonConstants;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
-import com.safeqr.app.qrcode.entity.QRCodeURL;
+import com.safeqr.app.qrcode.entity.QRCodeURLEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,10 +20,10 @@ public class URLVerificationService {
     private static final Logger logger = LoggerFactory.getLogger(URLVerificationService.class);
 
     // Function to breakdown URL into subdomain, domain, topLevelDomain, query params, fragment
-    public QRCodeURL breakdownURL(String urlString) throws MalformedURLException, URISyntaxException {
+    public QRCodeURLEntity breakdownURL(String urlString) throws MalformedURLException, URISyntaxException {
         URI uri = new URI(urlString);
         URL url = uri.toURL();
-        QRCodeURL urlObj = new QRCodeURL();
+        QRCodeURLEntity urlObj = new QRCodeURLEntity();
 
         String host = url.getHost();
         // split host into subdomain, domain, topLevelDomain
@@ -65,7 +65,7 @@ public class URLVerificationService {
         return urlObj;
     }
 
-    List<String> countAndTrackRedirects(String urlString) throws IOException, URISyntaxException {
+    public List<String> countAndTrackRedirects(String urlString) throws IOException, URISyntaxException {
         URI uri = new URI(urlString);
         URL url = uri.toURL();
         List<String> redirectChain = new ArrayList<>();

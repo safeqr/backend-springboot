@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Builder
 @Table(name = "scan_history", schema = "safeqr")
-public class ScanHistory {
+public class ScanHistoryEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

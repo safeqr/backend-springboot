@@ -1,5 +1,6 @@
 package com.safeqr.app.user.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -21,8 +22,13 @@ public class UserEntity {
     private String id;
     private String name;
     private String email;
-    private OffsetDateTime date_created;
-    private OffsetDateTime date_updated;
+
+    @Column(name = "date_created")
+    private OffsetDateTime dateCreated;
+
+    @Column(name = "date_updated")
+    private OffsetDateTime dateUpdated;
+
     private String source;
     private String status;
 }
