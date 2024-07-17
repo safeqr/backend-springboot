@@ -18,7 +18,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QRCodeURLEntity {
+public class URLEntity {
     @Id
     @JsonIgnore
     @GeneratedValue(generator = "UUID")

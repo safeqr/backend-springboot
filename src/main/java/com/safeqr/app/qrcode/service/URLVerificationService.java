@@ -3,9 +3,11 @@ package com.safeqr.app.qrcode.service;
 import com.safeqr.app.constants.CommonConstants;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
-import com.safeqr.app.qrcode.entity.QRCodeURLEntity;
+import com.safeqr.app.qrcode.entity.URLEntity;
+import com.safeqr.app.qrcode.repository.URLRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,12 +20,20 @@ import java.util.Map;
 @Service
 public class URLVerificationService {
     private static final Logger logger = LoggerFactory.getLogger(URLVerificationService.class);
+    private final URLRepository urlRepository;
+    @Autowired
+    public URLVerificationService(URLRepository urlRepository) {
+        this.urlRepository = urlRepository;
+    }
 
+    public void insertDB(URLEntity urlEntity) {
+        urlRepository.save(urlEntity);
+    }
     // Function to breakdown URL into subdomain, domain, topLevelDomain, query params, fragment
-    public QRCodeURLEntity breakdownURL(String urlString) throws MalformedURLException, URISyntaxException {
+    public URLEntity breakdownURL(String urlString) throws MalformedURLException, URISyntaxException {
         URI uri = new URI(urlString);
         URL url = uri.toURL();
-        QRCodeURLEntity urlObj = new QRCodeURLEntity();
+        URLEntity urlObj = new URLEntity();
 
         String host = url.getHost();
         // split host into subdomain, domain, topLevelDomain

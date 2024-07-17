@@ -28,23 +28,24 @@ public class QRCodeTypeService {
     private static final Logger logger = LoggerFactory.getLogger(QRCodeTypeService.class);
 
     private final QRCodeFactoryProvider qrCodeFactoryProvider;
-
+    private final QRCodeTypeRepository qrCodeTypeRepository;
+    private final ScanHistoryRepository scanHistoryRepository;
+    private final QRCodeRepository qrCodeRepository;
+    private final SafeBrowsingService safeBrowsingService;
     @Autowired
-    public QRCodeTypeService(QRCodeFactoryProvider qrCodeFactoryProvider) {
+    public QRCodeTypeService(QRCodeFactoryProvider qrCodeFactoryProvider,
+                             QRCodeTypeRepository qrCodeTypeRepository,
+                             ScanHistoryRepository scanHistoryRepository,
+                             QRCodeRepository qrCodeRepository,
+                             SafeBrowsingService safeBrowsingService
+                             ) {
         this.qrCodeFactoryProvider = qrCodeFactoryProvider;
+        this.qrCodeTypeRepository = qrCodeTypeRepository;
+        this.scanHistoryRepository = scanHistoryRepository;
+        this.qrCodeRepository = qrCodeRepository;
+        this.safeBrowsingService = safeBrowsingService;
     }
 
-
-
-    @Autowired
-    private QRCodeTypeRepository qrCodeTypeRepository;
-    @Autowired
-    private ScanHistoryRepository scanHistoryRepository;
-    @Autowired
-    private QRCodeRepository qrCodeRepository;
-
-    @Autowired
-    private SafeBrowsingService safeBrowsingService;
 
     private List<QRCodeTypeEntity> configs;
     private QRCodeTypeEntity defaultQRCodeTypeEntity;
@@ -88,9 +89,9 @@ public class QRCodeTypeService {
                     .scanStatus(ScanHistoryEntity.ScanStatus.ACTIVE)
                     .build());
         }
-
+        // Create the QR Code Instance based on the QR Code Type & insert into the respective table
         QRCodeModel qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(scannedQR, qrType);
-        qrCodeModel.insertDB();
+        qrCodeModel.setDetails();
 
         return BaseScanResponse.builder().qrcode(qrCodeModel).build();
     }
@@ -100,29 +101,6 @@ public class QRCodeTypeService {
                 .findFirst()
                 .orElse(defaultQRCodeTypeEntity);
     }
-
-//    private BaseScanResponse insertIntoRespectiveTable(QRCodeEntity qrCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-//        String contents = qrCodeEntity.getContents();
-//        try {
-//            QRCodeURLEntity urlObj = urlVerificationService.breakdownURL(contents);
-//            List<String> redirectChain = urlVerificationService.countAndTrackRedirects(contents);
-//            urlObj.setQrCodeId(qrCodeEntity.getId());
-//            urlObj.setRedirect(redirectChain.size() - 1);
-//            urlObj.setRedirectChain(redirectChain);
-//
-//            // Insert into URL table
-//            urlRepository.save(urlObj);
-//
-//            return URLResponse.builder().scannedQRCode(qrCodeEntity).qrCode(qrCodeTypeEntity).details(urlObj).build();
-//        } catch (IOException | URISyntaxException e) {
-//            logger.error("Error: ", e);
-//        }
-//
-//        return BaseScanResponse.builder()
-//                .scannedQRCode(qrCodeEntity)
-//                .qrCode(qrCodeTypeEntity)
-//                .build();
-//    }
 
     public Mono<String> detectType(QRCodePayload payload) {
         String data = payload.getData();

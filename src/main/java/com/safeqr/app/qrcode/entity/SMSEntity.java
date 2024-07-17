@@ -4,20 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "text", schema = "safeqr")
+@Table(name = "sms", schema = "safeqr")
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class QRCodeTextEntity {
+public class SMSEntity {
     @Id
     @JsonIgnore
     @GeneratedValue(generator = "UUID")
@@ -29,5 +25,6 @@ public class QRCodeTextEntity {
     @Column(name = "qr_code_id")
     private UUID qrCodeId;
 
-    private String text;
+    private String phone;
+    private String message;
 }

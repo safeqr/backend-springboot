@@ -9,17 +9,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class QRCodeFactoryProvider {
+    private final ApplicationContext applicationContext;
     @Autowired
-    private ApplicationContext applicationContext;
+    public QRCodeFactoryProvider(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     public QRCodeModel createQRCodeInstance(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        switch (qrCodeTypeEntity.getType().toUpperCase()) {
-            case "URL":
-                return applicationContext.getBean(QRCodeURLFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "TEXT":
-                return applicationContext.getBean(QRCodeTextFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            default:
-                throw new IllegalArgumentException("Unsupported QR code type: " + qrCodeTypeEntity.getType());
-        }
+        return switch (qrCodeTypeEntity.getType().toUpperCase()) {
+            case "URL" -> applicationContext.getBean(URLFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case "PHONE" -> applicationContext.getBean(PhoneFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case "SMS" -> applicationContext.getBean(SMSFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case "EMAIL" -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case "WIFI" -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case "TEXT" -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            default -> throw new IllegalArgumentException("Unsupported QR code type: " + qrCodeTypeEntity.getType());
+        };
     }
 }

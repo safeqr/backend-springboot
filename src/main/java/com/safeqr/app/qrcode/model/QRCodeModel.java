@@ -9,5 +9,5 @@ public abstract class QRCodeModel {
     QRCodeEntity scannedQRCode;
     QRCodeTypeEntity qrCode;
 
-    public abstract void insertDB();
+    public abstract void setDetails();
 }
