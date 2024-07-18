@@ -16,8 +16,8 @@ public class EmailVerificationService {
     public EmailVerificationService(EmailRepository emailRepository) {
         this.emailRepository = emailRepository;
     }
-    public void insertDB(EmailEntity EmailEntity) {
-        emailRepository.save(EmailEntity);
+    public void insertDB(EmailEntity emailEntity) {
+        emailRepository.save(emailEntity);
     }
 
 }

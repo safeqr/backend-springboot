@@ -16,8 +16,8 @@ public class PhoneVerificationService {
     public PhoneVerificationService(PhoneRepository phoneRepository) {
         this.phoneRepository = phoneRepository;
     }
-    public void insertDB(PhoneEntity PhoneEntity) {
-        phoneRepository.save(PhoneEntity);
+    public void insertDB(PhoneEntity phoneEntity) {
+        phoneRepository.save(phoneEntity);
     }
 
 }

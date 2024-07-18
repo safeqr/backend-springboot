@@ -16,8 +16,8 @@ public class WifiVerificationService {
     public WifiVerificationService(WifiRepository wifiRepository) {
         this.wifiRepository = wifiRepository;
     }
-    public void insertDB(WifiEntity WifiEntity) {
-        wifiRepository.save(WifiEntity);
+    public void insertDB(WifiEntity wifiEntity) {
+        wifiRepository.save(wifiEntity);
     }
 
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TextVerificationService {
     private final TextRepository textRepository;
-
+    private static final Logger logger = LoggerFactory.getLogger(TextVerificationService.class);
     @Autowired
     public TextVerificationService(TextRepository textRepository) {
         this.textRepository = textRepository;
@@ -18,5 +18,5 @@ public class TextVerificationService {
     public void insertDB(TextEntity textEntity) {
         textRepository.save(textEntity);
     }
-    private static final Logger logger = LoggerFactory.getLogger(TextVerificationService.class);
+
 }

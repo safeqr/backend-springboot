@@ -16,8 +16,8 @@ public class SMSVerificationService {
     public SMSVerificationService(SMSRepository smsRepository) {
         this.smsRepository = smsRepository;
     }
-    public void insertDB(SMSEntity SMSEntity) {
-        smsRepository.save(SMSEntity);
+    public void insertDB(SMSEntity smsEntity) {
+        smsRepository.save(smsEntity);
     }
 
 }

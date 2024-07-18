@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import static com.safeqr.app.constants.CommonConstants.*;
+
+
 @Component
 public class QRCodeFactoryProvider {
     private final ApplicationContext applicationContext;
@@ -17,12 +20,12 @@ public class QRCodeFactoryProvider {
 
     public QRCodeModel createQRCodeInstance(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
         return switch (qrCodeTypeEntity.getType().toUpperCase()) {
-            case "URL" -> applicationContext.getBean(URLFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "PHONE" -> applicationContext.getBean(PhoneFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "SMS" -> applicationContext.getBean(SMSFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "EMAIL" -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "WIFI" -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case "TEXT" -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case QR_CODE_TYPE_URL-> applicationContext.getBean(URLFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case QR_CODE_TYPE_PHONE -> applicationContext.getBean(PhoneFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case QR_CODE_TYPE_SMS -> applicationContext.getBean(SMSFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case QR_CODE_TYPE_EMAIL -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case QR_CODE_TYPE_WIFI -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
+            case DEFAULT_QR_CODE_TYPE -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
             default -> throw new IllegalArgumentException("Unsupported QR code type: " + qrCodeTypeEntity.getType());
         };
     }
