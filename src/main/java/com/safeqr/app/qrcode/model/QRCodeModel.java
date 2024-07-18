@@ -7,7 +7,5 @@ import lombok.Data;
 @Data
 public abstract class QRCodeModel {
     QRCodeEntity scannedQRCode;
-    QRCodeTypeEntity qrCode;
-
     public abstract void setDetails();
 }

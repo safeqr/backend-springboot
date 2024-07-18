@@ -20,9 +20,8 @@ public class SMSModel extends QRCodeModel {
 
     SMSEntity details;
 
-    public SMSModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, SMSVerificationService smsVerificationService) {
+    public SMSModel(QRCodeEntity scannedQRCodeEntity, SMSVerificationService smsVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.smsVerificationService = smsVerificationService;
         this.details = null;
     }

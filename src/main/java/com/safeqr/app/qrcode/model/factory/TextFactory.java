@@ -18,7 +18,7 @@ public class TextFactory implements QRCodeFactory<TextModel> {
 
 
     @Override
-    public TextModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new TextModel(scannedQRCodeEntity, qrCodeTypeEntity, textVerificationService);
+    public TextModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new TextModel(scannedQRCodeEntity, textVerificationService);
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -23,9 +22,8 @@ public class URLModel extends QRCodeModel {
 
     URLEntity details;
     @Autowired
-    public URLModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, URLVerificationService urlVerificationService) {
+    public URLModel(QRCodeEntity scannedQRCodeEntity, URLVerificationService urlVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.urlVerificationService = urlVerificationService;
         this.details = null;
     }

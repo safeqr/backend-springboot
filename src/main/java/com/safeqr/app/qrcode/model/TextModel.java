@@ -20,9 +20,8 @@ public class TextModel extends QRCodeModel {
 
     TextEntity details;
 
-    public TextModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, TextVerificationService textVerificationService) {
+    public TextModel(QRCodeEntity scannedQRCodeEntity, TextVerificationService textVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.textVerificationService = textVerificationService;
         this.details = null;
     }

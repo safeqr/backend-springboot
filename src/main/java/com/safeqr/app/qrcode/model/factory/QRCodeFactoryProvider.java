@@ -18,15 +18,15 @@ public class QRCodeFactoryProvider {
         this.applicationContext = applicationContext;
     }
 
-    public QRCodeModel createQRCodeInstance(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return switch (qrCodeTypeEntity.getType().toUpperCase()) {
-            case QR_CODE_TYPE_URL-> applicationContext.getBean(URLFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case QR_CODE_TYPE_PHONE -> applicationContext.getBean(PhoneFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case QR_CODE_TYPE_SMS -> applicationContext.getBean(SMSFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case QR_CODE_TYPE_EMAIL -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case QR_CODE_TYPE_WIFI -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            case DEFAULT_QR_CODE_TYPE -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity, qrCodeTypeEntity);
-            default -> throw new IllegalArgumentException("Unsupported QR code type: " + qrCodeTypeEntity.getType());
+    public QRCodeModel createQRCodeInstance(QRCodeEntity scannedQRCodeEntity) {
+        return switch (scannedQRCodeEntity.getInfo().getType().toUpperCase()) {
+            case QR_CODE_TYPE_URL-> applicationContext.getBean(URLFactory.class).create(scannedQRCodeEntity);
+            case QR_CODE_TYPE_PHONE -> applicationContext.getBean(PhoneFactory.class).create(scannedQRCodeEntity);
+            case QR_CODE_TYPE_SMS -> applicationContext.getBean(SMSFactory.class).create(scannedQRCodeEntity);
+            case QR_CODE_TYPE_EMAIL -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity);
+            case QR_CODE_TYPE_WIFI -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity);
+            case DEFAULT_QR_CODE_TYPE -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity);
+            default -> throw new IllegalArgumentException("Unsupported QR code type: " + scannedQRCodeEntity.getInfo().getType());
         };
     }
 }

@@ -20,9 +20,8 @@ public class WifiModel extends QRCodeModel {
 
     WifiEntity details;
 
-    public WifiModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, WifiVerificationService wifiVerificationService) {
+    public WifiModel(QRCodeEntity scannedQRCodeEntity, WifiVerificationService wifiVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.wifiVerificationService = wifiVerificationService;
         this.details = null;
     }

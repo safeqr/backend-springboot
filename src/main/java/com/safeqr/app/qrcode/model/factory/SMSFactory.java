@@ -18,7 +18,7 @@ public class SMSFactory implements QRCodeFactory<SMSModel> {
 
 
     @Override
-    public SMSModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new SMSModel(scannedQRCodeEntity, qrCodeTypeEntity, smsVerificationService);
+    public SMSModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new SMSModel(scannedQRCodeEntity, smsVerificationService);
     }
 }

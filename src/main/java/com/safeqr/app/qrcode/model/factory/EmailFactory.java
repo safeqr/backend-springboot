@@ -18,7 +18,7 @@ public class EmailFactory implements QRCodeFactory<EmailModel> {
 
 
     @Override
-    public EmailModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new EmailModel(scannedQRCodeEntity, qrCodeTypeEntity, emailVerificationService);
+    public EmailModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new EmailModel(scannedQRCodeEntity, emailVerificationService);
     }
 }

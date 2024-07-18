@@ -17,7 +17,7 @@ public class URLFactory implements QRCodeFactory<URLModel> {
     }
 
     @Override
-    public URLModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new URLModel(scannedQRCodeEntity, qrCodeTypeEntity, urlVerificationService);
+    public URLModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new URLModel(scannedQRCodeEntity, urlVerificationService);
     }
 }

@@ -20,9 +20,8 @@ public class PhoneModel extends QRCodeModel {
 
     PhoneEntity details;
 
-    public PhoneModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, PhoneVerificationService phoneVerificationService) {
+    public PhoneModel(QRCodeEntity scannedQRCodeEntity, PhoneVerificationService phoneVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.phoneVerificationService = phoneVerificationService;
         this.details = null;
     }

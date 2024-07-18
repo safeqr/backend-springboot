@@ -20,9 +20,8 @@ public class EmailModel extends QRCodeModel {
 
     EmailEntity details;
 
-    public EmailModel(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity, EmailVerificationService emailVerificationService) {
+    public EmailModel(QRCodeEntity scannedQRCodeEntity, EmailVerificationService emailVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
-        this.qrCode = qrCodeTypeEntity;
         this.emailVerificationService = emailVerificationService;
         this.details = null;
     }

@@ -27,12 +27,12 @@ public class QRCodeEntity {
     private UUID id;
 
     @JsonIgnore
-    @Column(name = "qr_code_type_id", nullable = false)
-    private Long qrCodeTypeId;
-
-    @JsonIgnore
     private String userId;
     private String contents;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "qr_code_type_id", nullable = false)
+    private QRCodeTypeEntity info;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

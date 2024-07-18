@@ -18,7 +18,7 @@ public class PhoneFactory implements QRCodeFactory<PhoneModel> {
 
 
     @Override
-    public PhoneModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new PhoneModel(scannedQRCodeEntity, qrCodeTypeEntity, phoneVerificationService);
+    public PhoneModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new PhoneModel(scannedQRCodeEntity, phoneVerificationService);
     }
 }

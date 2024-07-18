@@ -6,5 +6,5 @@ import com.safeqr.app.qrcode.model.QRCodeModel;
 
 @FunctionalInterface
 public interface QRCodeFactory<T extends QRCodeModel> {
-    T create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity);
+    T create(QRCodeEntity scannedQRCodeEntity);
 }

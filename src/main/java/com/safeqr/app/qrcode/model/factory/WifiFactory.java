@@ -18,7 +18,7 @@ public class WifiFactory implements QRCodeFactory<WifiModel> {
 
 
     @Override
-    public WifiModel create(QRCodeEntity scannedQRCodeEntity, QRCodeTypeEntity qrCodeTypeEntity) {
-        return new WifiModel(scannedQRCodeEntity, qrCodeTypeEntity, wifiVerificationService);
+    public WifiModel create(QRCodeEntity scannedQRCodeEntity) {
+        return new WifiModel(scannedQRCodeEntity, wifiVerificationService);
     }
 }
