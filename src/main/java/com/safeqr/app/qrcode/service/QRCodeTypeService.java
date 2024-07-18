@@ -1,7 +1,7 @@
 
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.constants.CommonConstants;
+import static com.safeqr.app.constants.CommonConstants.*;
 import com.safeqr.app.qrcode.dto.QRCodePayload;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
@@ -22,6 +22,8 @@ import reactor.core.publisher.Mono;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class QRCodeTypeService {
@@ -49,6 +51,7 @@ public class QRCodeTypeService {
 
     private List<QRCodeTypeEntity> configs;
     private QRCodeTypeEntity defaultQRCodeTypeEntity;
+    private Map<Long, String> tableMap;
 
     @PostConstruct
     public void loadQRCodeTypes() {
@@ -56,9 +59,12 @@ public class QRCodeTypeService {
         configs = qrCodeTypeRepository.findAll();
         // Set the default QR Code Type
         defaultQRCodeTypeEntity = configs.stream()
-                .filter(config -> config.getType().equals(CommonConstants.DEFAULT_QR_CODE_TYPE))
+                .filter(config -> config.getType().equals(DEFAULT_QR_CODE_TYPE))
                 .findFirst()
                 .orElse(null);
+        // Construct the tableMap with key = qrCodeTypeId, value = tableName
+        tableMap = configs.stream().collect(Collectors.toMap(QRCodeTypeEntity::getId, QRCodeTypeEntity::getTableName));
+        logger.info("Table map: {}", tableMap);
     }
 
     public List<QRCodeTypeEntity> getAllTypes() {
@@ -95,11 +101,16 @@ public class QRCodeTypeService {
 
         return BaseScanResponse.builder().qrcode(qrCodeModel).build();
     }
+    // Returns Default type as text if it does not fit into any of the category
     private QRCodeTypeEntity getQRCodeType(String data) {
         return configs.stream()
                 .filter(config -> data.toLowerCase().startsWith(config.getPrefix().toLowerCase()))
                 .findFirst()
                 .orElse(defaultQRCodeTypeEntity);
+    }
+    // Returns name of table given type
+    public String getTableMap(Long qrTypeId) {
+        return tableMap.get(qrTypeId);
     }
 
     public Mono<String> detectType(QRCodePayload payload) {

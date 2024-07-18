@@ -12,4 +12,9 @@ public class CommonConstants {
     public static final String QR_CODE_TYPE_SMS = "SMS";
     public static final String QR_CODE_TYPE_URL = "URL";
     public static final String QR_CODE_TYPE_WIFI = "WIFI";
+
+    public static final String INFO_NON_SECURE_CONNECTION = "Not an HTTPS connection";
+    public static final String INFO_NO_HSTS_HEADER = "No HSTS Header detected";
+    public static final String INFO_HSTS_HEADER_PREFIX = "HSTS Header: ";
+    public static final String INFO_HSTS_NOT_APPLICABLE = "N/A";
 }

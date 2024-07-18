@@ -3,8 +3,10 @@ package com.safeqr.app.qrcode.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
@@ -13,10 +15,12 @@ import java.util.UUID;
 @Table(name = "sms", schema = "safeqr")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SMSEntity {
     @Id
     @JsonIgnore
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @UuidGenerator
     @Column(updatable = false, nullable = false)
     private UUID id;

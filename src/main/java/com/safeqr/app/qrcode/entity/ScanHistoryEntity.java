@@ -1,12 +1,16 @@
 package com.safeqr.app.qrcode.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Entity
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "scan_history", schema = "safeqr")
 public class ScanHistoryEntity {
 

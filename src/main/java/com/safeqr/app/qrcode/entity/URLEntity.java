@@ -45,6 +45,12 @@ public class URLEntity {
 
     private int redirect = 0;
 
+    @Column(name = "hsts_header")
+    private List<String> hstsHeader;
+
+    @Column(name = "ssl_stripping")
+    private List<Boolean> sslStripping;
+
     @Column(name = "redirect_chain")
     private List<String> redirectChain;
 }

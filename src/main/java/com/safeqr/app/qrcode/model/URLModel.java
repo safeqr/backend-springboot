@@ -35,11 +35,9 @@ public class URLModel extends QRCodeModel {
         String url = scannedQRCode.getContents();
         try {
             details = urlVerificationService.breakdownURL(url);
-            List<String> redirectChain = urlVerificationService.countAndTrackRedirects(url);
+            urlVerificationService.countAndTrackRedirects(url, details);
             // set qrCode Identifier
             details.setQrCodeId(scannedQRCode.getId());
-            details.setRedirect(redirectChain.size() - 1);
-            details.setRedirectChain(redirectChain);
 
             // Insert into URL table
             urlVerificationService.insertDB(details);
