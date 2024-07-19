@@ -11,8 +11,8 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "scan_history", schema = "safeqr")
-public class ScanHistoryEntity {
+@Table(name = "scan_bookmark", schema = "safeqr")
+public class ScanBookmarkEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,13 +25,14 @@ public class ScanHistoryEntity {
     private String userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private ScanStatus scanStatus;
+    @Column(name = "status", nullable = false)
+    private BookmarkStatus scanStatus;
 
-    public enum ScanStatus {
+    public enum BookmarkStatus {
         ACTIVE,
         INACTIVE
     }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "qr_code_id", referencedColumnName = "id", insertable = false, updatable = false)
     private QRCodeEntity qrCodeEntity;

@@ -19,19 +19,19 @@ public final class SMSModel extends QRCodeModel<SMSEntity> {
     private final SMSVerificationService smsVerificationService;
 
     public SMSModel(QRCodeEntity scannedQRCodeEntity, SMSVerificationService smsVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.smsVerificationService = smsVerificationService;
         this.details = null;
     }
 
     @Override
     public void setDetails() {
-        details = SMSEntity.builder().qrCodeId(scannedQRCode.getId()).build();
+        details = SMSEntity.builder().qrCodeId(data.getId()).build();
         // Insert into sms table
         smsVerificationService.insertDB(details);
     }
     @Override
     public SMSEntity getDetails () {
-        return new SMSEntity();
+        return smsVerificationService.getSMSEntityByQRCodeId(data.getId());
     }
 }

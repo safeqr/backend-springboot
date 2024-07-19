@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(QRCodeExceptions.class)
-    public ResponseEntity<ErrorResponse> handleQRCodeNotFoundException(QRCodeExceptions e) {
+    @ExceptionHandler(CustomNotFoundExceptions.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(CustomNotFoundExceptions e) {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()), HttpStatus.NOT_FOUND);
     }
 }

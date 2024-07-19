@@ -1,7 +1,6 @@
 package com.safeqr.app.qrcode.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.WifiEntity;
 import com.safeqr.app.qrcode.service.WifiVerificationService;
@@ -19,19 +18,19 @@ public final class WifiModel extends QRCodeModel<WifiEntity> {
     private final WifiVerificationService wifiVerificationService;
 
     public WifiModel(QRCodeEntity scannedQRCodeEntity, WifiVerificationService wifiVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.wifiVerificationService = wifiVerificationService;
         this.details = null;
     }
 
     @Override
     public void setDetails() {
-        details = WifiEntity.builder().qrCodeId(scannedQRCode.getId()).build();
+        details = WifiEntity.builder().qrCodeId(data.getId()).build();
         // Insert into wifi table
         wifiVerificationService.insertDB(details);
     }
     @Override
     public WifiEntity getDetails () {
-        return new WifiEntity();
+        return wifiVerificationService.getWifiEntityByQRCodeId(data.getId());
     }
 }

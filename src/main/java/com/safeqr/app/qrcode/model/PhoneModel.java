@@ -19,19 +19,19 @@ public final class PhoneModel extends QRCodeModel<PhoneEntity> {
     private final PhoneVerificationService phoneVerificationService;
 
     public PhoneModel(QRCodeEntity scannedQRCodeEntity, PhoneVerificationService phoneVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.phoneVerificationService = phoneVerificationService;
         this.details = null;
     }
 
     @Override
     public void setDetails() {
-        details = PhoneEntity.builder().qrCodeId(scannedQRCode.getId()).build();
+        details = PhoneEntity.builder().qrCodeId(data.getId()).build();
         // Insert into phone table
         phoneVerificationService.insertDB(details);
     }
     @Override
     public PhoneEntity getDetails () {
-        return new PhoneEntity();
+        return phoneVerificationService.getPhoneEntityByQRCodeId(data.getId());
     }
 }

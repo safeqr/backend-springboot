@@ -13,4 +13,9 @@ public class APIConstants {
     public static final String API_URL_QRCODE_REDIRECT_COUNT = "/qrcodetypes/redirectcount";
     public static final String API_URL_QRCODE_GET_QR_DETAILS = "/qrcodetypes/getQRDetails";
 
+
+    public static final String API_URL_USER_GET = "/user/getUser";
+    public static final String API_URL_USER_GET_SCANNED_HISTORIES = "/user/getScannedHistories";
+    public static final String API_URL_USER_GET_BOOKMARKS = "/user/getBookmarks";
+
 }

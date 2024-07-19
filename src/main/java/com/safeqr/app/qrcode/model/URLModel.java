@@ -22,19 +22,19 @@ public final class URLModel extends QRCodeModel<URLEntity> {
 
     @Autowired
     public URLModel(QRCodeEntity scannedQRCodeEntity, URLVerificationService urlVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.urlVerificationService = urlVerificationService;
         details = null;
     }
 
     @Override
     public void setDetails() {
-        String url = scannedQRCode.getContents();
+        String url = data.getContents();
         try {
             details = urlVerificationService.breakdownURL(url);
             urlVerificationService.countAndTrackRedirects(url, details);
             // set qrCode Identifier
-            details.setQrCodeId(scannedQRCode.getId());
+            details.setQrCodeId(data.getId());
 
             // Insert into URL table
             urlVerificationService.insertDB(details);
@@ -45,6 +45,6 @@ public final class URLModel extends QRCodeModel<URLEntity> {
     }
     @Override
     public URLEntity getDetails () {
-        return urlVerificationService.getURLEntityByQRCodeId(scannedQRCode.getId());
+        return urlVerificationService.getURLEntityByQRCodeId(data.getId());
     }
 }

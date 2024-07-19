@@ -19,20 +19,20 @@ public final class EmailModel extends QRCodeModel<EmailEntity> {
     private final EmailVerificationService emailVerificationService;
 
     public EmailModel(QRCodeEntity scannedQRCodeEntity, EmailVerificationService emailVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.emailVerificationService = emailVerificationService;
         this.details = null;
     }
 
     @Override
     public void setDetails() {
-        details = EmailEntity.builder().qrCodeId(scannedQRCode.getId()).build();
+        details = EmailEntity.builder().qrCodeId(data.getId()).build();
         // Insert into email table
         emailVerificationService.insertDB(details);
     }
 
     @Override
     public EmailEntity getDetails () {
-        return new EmailEntity();
+        return emailVerificationService.getEmailEntityByQRCodeId(data.getId());
     }
 }

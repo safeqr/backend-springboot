@@ -3,7 +3,7 @@ package com.safeqr.app.qrcode.service;
 
 import static com.safeqr.app.constants.CommonConstants.*;
 
-import com.safeqr.app.exceptions.QRCodeExceptions;
+import com.safeqr.app.exceptions.CustomNotFoundExceptions;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
@@ -24,11 +24,7 @@ import reactor.core.publisher.Mono;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class QRCodeTypeService {
@@ -73,7 +69,7 @@ public class QRCodeTypeService {
     public BaseScanResponse getScannedQRCodeDetails(UUID qrCodeId){
         // Find scanned qr code in qr code table
         QRCodeEntity qrCodeEntity = qrCodeRepository.findById(qrCodeId)
-                .orElseThrow(() -> new QRCodeExceptions("QR Code not found with id: " + qrCodeId));
+                .orElseThrow(() -> new CustomNotFoundExceptions("QR Code not found with id: " + qrCodeId));
         logger.info("qrCodeEntity: {}", qrCodeEntity);
         QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(qrCodeEntity);
         logger.info("Retrieved details: {}", qrCodeModel.getDetails());

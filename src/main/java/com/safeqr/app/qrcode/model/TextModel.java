@@ -19,19 +19,19 @@ public final class TextModel extends QRCodeModel<TextEntity> {
     private final TextVerificationService textVerificationService;
 
     public TextModel(QRCodeEntity scannedQRCodeEntity, TextVerificationService textVerificationService) {
-        this.scannedQRCode = scannedQRCodeEntity;
+        this.data = scannedQRCodeEntity;
         this.textVerificationService = textVerificationService;
         this.details = null;
     }
 
     @Override
     public void setDetails() {
-        details = TextEntity.builder().qrCodeId(scannedQRCode.getId()).text(scannedQRCode.getContents()).build();
+        details = TextEntity.builder().qrCodeId(data.getId()).text(data.getContents()).build();
         // Insert into text table
         textVerificationService.insertDB(details);
     }
     @Override
     public TextEntity getDetails () {
-        return new TextEntity();
+        return textVerificationService.getTextEntityByQRCodeId(data.getId());
     }
 }

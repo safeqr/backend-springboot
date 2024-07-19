@@ -1,19 +1,19 @@
 package com.safeqr.app.user.entity;
 
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
+import org.hibernate.annotations.Type;
 
-import java.util.List;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 @Entity
 @Data
 @Table(name="user", schema = "safeqr")
@@ -29,6 +29,8 @@ public class UserEntity {
     @Column(name = "date_updated")
     private OffsetDateTime dateUpdated;
 
-    private String source;
+    @Type(ListArrayType.class)
+    @Column(name = "roles", columnDefinition = "text[]")
+    private List<String> roles;
     private String status;
 }
