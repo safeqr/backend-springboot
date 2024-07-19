@@ -1,9 +1,9 @@
 package com.safeqr.app.qrcode.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.WifiEntity;
-import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.service.WifiVerificationService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,13 +12,11 @@ import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class WifiModel extends QRCodeModel {
+public final class WifiModel extends QRCodeModel<WifiEntity> {
     private static final Logger logger = LoggerFactory.getLogger(WifiModel.class);
 
     @JsonIgnore
     private final WifiVerificationService wifiVerificationService;
-
-    WifiEntity details;
 
     public WifiModel(QRCodeEntity scannedQRCodeEntity, WifiVerificationService wifiVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
@@ -31,5 +29,9 @@ public class WifiModel extends QRCodeModel {
         details = WifiEntity.builder().qrCodeId(scannedQRCode.getId()).build();
         // Insert into wifi table
         wifiVerificationService.insertDB(details);
+    }
+    @Override
+    public WifiEntity getDetails () {
+        return new WifiEntity();
     }
 }

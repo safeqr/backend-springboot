@@ -1,7 +1,7 @@
 
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.qrcode.dto.QRCodePayload;
+import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

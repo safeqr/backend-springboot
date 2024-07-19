@@ -1,8 +1,8 @@
 package com.safeqr.app.qrcode.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
-import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.entity.URLEntity;
 import com.safeqr.app.qrcode.service.URLVerificationService;
 import lombok.*;
@@ -15,17 +15,16 @@ import java.net.URISyntaxException;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class URLModel extends QRCodeModel {
+public final class URLModel extends QRCodeModel<URLEntity> {
     private static final Logger logger = LoggerFactory.getLogger(URLModel.class);
     @JsonIgnore
     private final URLVerificationService urlVerificationService;
 
-    URLEntity details;
     @Autowired
     public URLModel(QRCodeEntity scannedQRCodeEntity, URLVerificationService urlVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
         this.urlVerificationService = urlVerificationService;
-        this.details = null;
+        details = null;
     }
 
     @Override
@@ -43,5 +42,9 @@ public class URLModel extends QRCodeModel {
         } catch (IOException | URISyntaxException e) {
             logger.error("Error: ", e);
         }
+    }
+    @Override
+    public URLEntity getDetails () {
+        return urlVerificationService.getURLEntityByQRCodeId(scannedQRCode.getId());
     }
 }

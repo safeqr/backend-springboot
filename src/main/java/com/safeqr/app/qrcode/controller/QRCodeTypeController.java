@@ -2,7 +2,7 @@ package com.safeqr.app.qrcode.controller;
 
 import static com.safeqr.app.constants.APIConstants.*;
 import static com.safeqr.app.constants.CommonConstants.*;
-import com.safeqr.app.qrcode.dto.QRCodePayload;
+import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(API_VERSION)
@@ -41,6 +42,11 @@ public class QRCodeTypeController {
     @GetMapping(value = API_URL_QRCODE_GET_ALL)
     public ResponseEntity<List<QRCodeTypeEntity>> getAllTypes() {
         return ResponseEntity.ok(qrCodeTypeService.getAllTypes());
+    }
+    @GetMapping(value = API_URL_QRCODE_GET_SCANNED_DETAILS)
+    public ResponseEntity<BaseScanResponse> getScannedQRCodeDetails(@RequestHeader(name="QR-ID") UUID qrCodeId) {
+        logger.info("Invoking GET QRCode details endpoint, qrCodeId: {}", qrCodeId);
+        return ResponseEntity.ok(qrCodeTypeService.getScannedQRCodeDetails(qrCodeId));
     }
 
     @PostMapping(value = API_URL_QRCODE_SCAN, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -1,7 +1,6 @@
 package com.safeqr.app.qrcode.model.factory;
 
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
-import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.model.EmailModel;
 import com.safeqr.app.qrcode.service.EmailVerificationService;
 import org.springframework.beans.factory.annotation.Autowired;

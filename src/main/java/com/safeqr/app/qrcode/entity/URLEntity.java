@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.List;
@@ -45,12 +46,12 @@ public class URLEntity {
 
     private int redirect = 0;
 
-    @Column(name = "hsts_header")
+    @Column(name = "hsts_header", columnDefinition = "text[]")
     private List<String> hstsHeader;
 
-    @Column(name = "ssl_stripping")
+    @Column(name = "ssl_stripping", columnDefinition = "boolean[]")
     private List<Boolean> sslStripping;
 
-    @Column(name = "redirect_chain")
+    @Column(name = "redirect_chain", columnDefinition = "text[]")
     private List<String> redirectChain;
 }

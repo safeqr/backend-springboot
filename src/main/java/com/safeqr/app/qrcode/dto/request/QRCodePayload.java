@@ -1,4 +1,4 @@
-package com.safeqr.app.qrcode.dto;
+package com.safeqr.app.qrcode.dto.request;
 
 import lombok.Data;
 

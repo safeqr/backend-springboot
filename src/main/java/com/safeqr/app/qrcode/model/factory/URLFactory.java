@@ -1,7 +1,6 @@
 package com.safeqr.app.qrcode.model.factory;
 
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
-import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.model.URLModel;
 import com.safeqr.app.qrcode.service.URLVerificationService;
 import org.springframework.beans.factory.annotation.Autowired;

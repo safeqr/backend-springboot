@@ -1,9 +1,9 @@
 package com.safeqr.app.qrcode.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.PhoneEntity;
-import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.service.PhoneVerificationService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,13 +12,11 @@ import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class PhoneModel extends QRCodeModel {
+public final class PhoneModel extends QRCodeModel<PhoneEntity> {
     private static final Logger logger = LoggerFactory.getLogger(PhoneModel.class);
 
     @JsonIgnore
     private final PhoneVerificationService phoneVerificationService;
-
-    PhoneEntity details;
 
     public PhoneModel(QRCodeEntity scannedQRCodeEntity, PhoneVerificationService phoneVerificationService) {
         this.scannedQRCode = scannedQRCodeEntity;
@@ -31,5 +29,9 @@ public class PhoneModel extends QRCodeModel {
         details = PhoneEntity.builder().qrCodeId(scannedQRCode.getId()).build();
         // Insert into phone table
         phoneVerificationService.insertDB(details);
+    }
+    @Override
+    public PhoneEntity getDetails () {
+        return new PhoneEntity();
     }
 }
