@@ -2,6 +2,7 @@ package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,12 +47,15 @@ public class URLEntity {
 
     private int redirect = 0;
 
+    @Type(ListArrayType.class)
     @Column(name = "hsts_header", columnDefinition = "text[]")
     private List<String> hstsHeader;
 
+    @Type(ListArrayType.class)
     @Column(name = "ssl_stripping", columnDefinition = "boolean[]")
     private List<Boolean> sslStripping;
 
+    @Type(ListArrayType.class)
     @Column(name = "redirect_chain", columnDefinition = "text[]")
     private List<String> redirectChain;
 }

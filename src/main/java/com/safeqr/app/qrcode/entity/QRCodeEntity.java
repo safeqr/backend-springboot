@@ -30,7 +30,7 @@ public class QRCodeEntity {
     private String userId;
     private String contents;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "qr_code_type_id", nullable = false)
     private QRCodeTypeEntity info;
 

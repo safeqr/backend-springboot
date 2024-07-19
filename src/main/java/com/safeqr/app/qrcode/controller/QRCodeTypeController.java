@@ -43,7 +43,7 @@ public class QRCodeTypeController {
     public ResponseEntity<List<QRCodeTypeEntity>> getAllTypes() {
         return ResponseEntity.ok(qrCodeTypeService.getAllTypes());
     }
-    @GetMapping(value = API_URL_QRCODE_GET_SCANNED_DETAILS)
+    @GetMapping(value = API_URL_QRCODE_GET_QR_DETAILS)
     public ResponseEntity<BaseScanResponse> getScannedQRCodeDetails(@RequestHeader(name="QR-ID") UUID qrCodeId) {
         logger.info("Invoking GET QRCode details endpoint, qrCodeId: {}", qrCodeId);
         return ResponseEntity.ok(qrCodeTypeService.getScannedQRCodeDetails(qrCodeId));
