@@ -1,6 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.WifiEntity;
 import com.safeqr.app.qrcode.repository.WifiRepository;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class WifiVerificationService {
     public WifiEntity getWifiEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
         return wifiRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("Wifi not found for QR Code id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("Wifi not found for QR Code id: " + qrCodeId));
     }
     public void insertDB(WifiEntity wifiEntity) {
         wifiRepository.save(wifiEntity);

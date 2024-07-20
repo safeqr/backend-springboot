@@ -2,7 +2,7 @@ package com.safeqr.app.qrcode.service;
 
 import static com.safeqr.app.constants.CommonConstants.*;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.entity.URLEntity;
@@ -30,7 +30,7 @@ public class URLVerificationService {
     public URLEntity getURLEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
         return urlRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("URL not found for QR Code id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("URL not found for QR Code id: " + qrCodeId));
     }
 
     public void insertDB(URLEntity urlEntity) {

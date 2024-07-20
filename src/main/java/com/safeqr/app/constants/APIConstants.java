@@ -16,6 +16,11 @@ public class APIConstants {
 
     public static final String API_URL_USER_GET = "/user/getUser";
     public static final String API_URL_USER_GET_SCANNED_HISTORIES = "/user/getScannedHistories";
+    public static final String API_URL_USER_DELETE_SCANNED_HISTORIES = "/user/deleteScannedHistories";
+    public static final String API_URL_USER_DELETE_ALL_SCANNED_HISTORIES = "/user/deleteAllScannedHistories";
     public static final String API_URL_USER_GET_BOOKMARKS = "/user/getBookmarks";
+    public static final String API_URL_USER_SET_BOOKMARK = "/user/setBookmark";
+    public static final String API_URL_USER_DELETE_BOOKMARK = "/user/deleteBookmark";
+    public static final String API_URL_USER_DELETE_ALL_BOOKMARK = "/user/deleteAllBookmark";
 
 }

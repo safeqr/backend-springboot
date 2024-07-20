@@ -3,7 +3,7 @@ package com.safeqr.app.qrcode.service;
 
 import static com.safeqr.app.constants.CommonConstants.*;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.security.NoSuchAlgorithmException;
@@ -69,7 +70,7 @@ public class QRCodeTypeService {
     public BaseScanResponse getScannedQRCodeDetails(UUID qrCodeId){
         // Find scanned qr code in qr code table
         QRCodeEntity qrCodeEntity = qrCodeRepository.findById(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("QR Code not found with id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("QR Code not found with id: " + qrCodeId));
         logger.info("qrCodeEntity: {}", qrCodeEntity);
         QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(qrCodeEntity);
         logger.info("Retrieved details: {}", qrCodeModel.getDetails());
@@ -77,6 +78,7 @@ public class QRCodeTypeService {
     }
 
     // Process Scanned QR Code
+    @Transactional
     public BaseScanResponse scanQRCode(String userId, QRCodePayload payload) {
         String data = payload.getData();
         logger.info("scanQRCode: userId={}, data={}", userId, data);

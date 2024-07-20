@@ -1,6 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.repository.EmailRepository;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class EmailVerificationService {
     public EmailEntity getEmailEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
         return emailRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("Email not found for QR Code id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("Email not found for QR Code id: " + qrCodeId));
     }
     public void insertDB(EmailEntity emailEntity) {
         emailRepository.save(emailEntity);

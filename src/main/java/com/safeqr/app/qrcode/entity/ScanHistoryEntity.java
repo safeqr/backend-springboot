@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -28,6 +29,12 @@ public class ScanHistoryEntity {
     @Column(name = "status")
     private ScanStatus scanStatus;
 
+    @Column(name = "date_created", updatable = false)
+    private OffsetDateTime dateCreated;
+
+    @Column(name = "date_updated")
+    private OffsetDateTime dateUpdated;
+
     public enum ScanStatus {
         ACTIVE,
         INACTIVE
@@ -35,4 +42,11 @@ public class ScanHistoryEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "qr_code_id", referencedColumnName = "id", insertable = false, updatable = false)
     private QRCodeEntity qrCodeEntity;
+
+    @PrePersist
+    public void prePersist() {
+        OffsetDateTime now = OffsetDateTime.now();
+        dateCreated = now;
+        dateUpdated = now;
+    }
 }

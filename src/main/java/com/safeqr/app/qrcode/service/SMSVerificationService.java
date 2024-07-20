@@ -1,6 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.SMSEntity;
 import com.safeqr.app.qrcode.repository.SMSRepository;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ public class SMSVerificationService {
     public SMSEntity getSMSEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
         return smsRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("SMS not found for QR Code id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("SMS not found for QR Code id: " + qrCodeId));
     }
     public void insertDB(SMSEntity smsEntity) {
         smsRepository.save(smsEntity);

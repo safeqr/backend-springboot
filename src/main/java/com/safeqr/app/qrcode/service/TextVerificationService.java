@@ -1,6 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
-import com.safeqr.app.exceptions.CustomNotFoundExceptions;
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.TextEntity;
 import com.safeqr.app.qrcode.repository.TextRepository;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class TextVerificationService {
     public TextEntity getTextEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
         return textRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new CustomNotFoundExceptions("Text not found for QR Code id: " + qrCodeId));
+                .orElseThrow(() -> new ResourceNotFoundExceptions("Text not found for QR Code id: " + qrCodeId));
     }
     public void insertDB(TextEntity textEntity) {
         textRepository.save(textEntity);
