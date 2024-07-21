@@ -35,6 +35,9 @@ public class ScanHistoryEntity {
     @Column(name = "date_updated")
     private OffsetDateTime dateUpdated;
 
+    @Column(name = "bookmarked")
+    private boolean bookmarked;
+
     public enum ScanStatus {
         ACTIVE,
         INACTIVE

@@ -6,6 +6,7 @@ import static com.safeqr.app.constants.CommonConstants.HEADER_USER_ID;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.user.dto.BaseResponse;
 import com.safeqr.app.user.dto.BookmarkRequestDto;
+import com.safeqr.app.user.dto.ScannedHistoriesDto;
 import com.safeqr.app.user.dto.UserResponseDto;
 import com.safeqr.app.user.service.UserService;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping(value = API_URL_USER_GET_SCANNED_HISTORIES, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<QRCodeEntity>> getUserScannedHistories(@RequestHeader(name = HEADER_USER_ID) String userId) {
+    public ResponseEntity<List<ScannedHistoriesDto>> getUserScannedHistories(@RequestHeader(name = HEADER_USER_ID) String userId) {
         logger.info("Invoking GET User Scanned Histories endpoint");
         return ResponseEntity.ok(userService.getUserScannedHistories(userId));
     }

@@ -6,8 +6,8 @@ import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.ScanBookmarkEntity;
 import com.safeqr.app.qrcode.repository.ScanBookmarkRepository;
 import com.safeqr.app.qrcode.repository.ScanHistoryRepository;
-import com.safeqr.app.user.controller.UserController;
 import com.safeqr.app.user.dto.BaseResponse;
+import com.safeqr.app.user.dto.ScannedHistoriesDto;
 import com.safeqr.app.user.dto.UserResponseDto;
 import com.safeqr.app.user.entity.UserEntity;
 import com.safeqr.app.user.repository.UserRepository;
@@ -54,7 +54,7 @@ public class UserService {
                 .status(userEntity.getStatus())
                 .build();
     }
-    public List<QRCodeEntity> getUserScannedHistories(String userId) {
+    public List<ScannedHistoriesDto> getUserScannedHistories(String userId) {
         return scanHistoryRepository.findAllQRCodesByUserId(userId);
     }
     @Transactional
