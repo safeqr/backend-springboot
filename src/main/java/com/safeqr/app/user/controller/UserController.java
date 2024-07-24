@@ -60,7 +60,7 @@ public class UserController {
     }
 
     @GetMapping(value = API_URL_USER_GET_BOOKMARKS, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<QRCodeEntity>> getUserBookmarks(@RequestHeader(name = HEADER_USER_ID) String userId) {
+    public ResponseEntity<List<ScannedHistoriesDto>> getUserBookmarks(@RequestHeader(name = HEADER_USER_ID) String userId) {
         logger.info("Invoking GET User bookmarks endpoint");
         return ResponseEntity.ok(userService.getUserBookmarks(userId));
     }

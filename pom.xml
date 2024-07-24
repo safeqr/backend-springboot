@@ -68,6 +68,11 @@
 			<artifactId>hypersistence-utils-hibernate-63</artifactId>
 			<version>3.8.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-gmail</artifactId>
+			<version>v1-rev20240520-2.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

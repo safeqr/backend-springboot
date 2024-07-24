@@ -2,8 +2,8 @@ package com.safeqr.app.user.service;
 
 import com.safeqr.app.exceptions.ResourceAlreadyExists;
 import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
-import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.ScanBookmarkEntity;
+import com.safeqr.app.qrcode.entity.ScanHistoryEntity;
 import com.safeqr.app.qrcode.repository.ScanBookmarkRepository;
 import com.safeqr.app.qrcode.repository.ScanHistoryRepository;
 import com.safeqr.app.user.dto.BaseResponse;
@@ -75,39 +75,32 @@ public class UserService {
                 BaseResponse.builder().message("No QR Code not found").build():
                 BaseResponse.builder().message("All scanned QR Code deleted successfully").build();
     }
-    public List<QRCodeEntity> getUserBookmarks(String userId) {
-        return scanBookmarkRepository.findAllBookmarksByUserId(userId);
+    public List<ScannedHistoriesDto> getUserBookmarks(String userId) {
+        return scanHistoryRepository.findAllBookmarksByUserId(userId);
     }
     @Transactional
     public BaseResponse setBookmark(String userId, UUID qrCodeId) {
         // Check if the bookmark already exists
-        Optional<ScanBookmarkEntity> existingBookmark = scanBookmarkRepository.findByUserIdAndQrCodeId(userId, qrCodeId);
+        Optional<ScanHistoryEntity> existingBookmark = scanHistoryRepository.findByUserIdAndQrCodeId(userId, qrCodeId);
 
         // throw exception if bookmark already exists
         if (existingBookmark.isPresent()) {
             throw new ResourceAlreadyExists("Bookmark already exists!");
         }
-        try {
-            // Save bookmark
-            ScanBookmarkEntity bookmarkEntity = ScanBookmarkEntity.builder()
-                    .userId(userId)
-                    .qrCodeId(qrCodeId)
-                    .bookmarkStatus(ScanBookmarkEntity.BookmarkStatus.ACTIVE)
-                    .build();
-            scanBookmarkRepository.save(bookmarkEntity);
 
-        } catch (DataIntegrityViolationException e) {
-            logger.error("Failed to create bookmark: {}", e.getMessage());
-            // throw exception if bookmark creation fails
+        // Save bookmark by updating booked to true
+        int updatedCount = scanHistoryRepository.updateBookmarkStatusToActive(userId, qrCodeId);
+
+        if (updatedCount < 1)
             throw new ResourceNotFoundExceptions("Unable to create bookmark. The QR code may not exist.");
-        }
 
         return BaseResponse.builder().message("Bookmark saved successfully").build();
+
     }
 
     @Transactional
     public BaseResponse deleteBookmark(String userId, UUID qrCodeId) {
-        int updatedCount = scanBookmarkRepository.updateBookmarkStatusToInactive(userId, qrCodeId);
+        int updatedCount = scanHistoryRepository.updateBookmarkStatusToInactive(userId, qrCodeId);
         // throw exception if bookmark not found
         if (updatedCount < 1)
             throw new ResourceNotFoundExceptions("Bookmark not found");
@@ -117,7 +110,7 @@ public class UserService {
 
     @Transactional
     public BaseResponse deleteAllBookmarkByUserId(String userId) {
-        int updatedCount = scanBookmarkRepository.updateBookmarkStatusToInactiveByUserId(userId);
+        int updatedCount = scanHistoryRepository.updateBookmarkStatusToInactiveByUserId(userId);
 
         return (updatedCount < 1) ?
                 BaseResponse.builder().message("No Bookmark not found").build():
