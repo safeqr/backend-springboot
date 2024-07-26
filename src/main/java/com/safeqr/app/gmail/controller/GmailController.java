@@ -1,8 +1,9 @@
 package com.safeqr.app.gmail.controller;
 
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.MessagePart;
-import com.google.api.services.gmail.model.MessagePartHeader;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.LuminanceSource;
 import com.google.zxing.MultiFormatReader;
@@ -38,7 +39,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.imageio.ImageIO;
 
-import static com.safeqr.app.constants.APIConstants.API_VERSION;
+import static com.safeqr.app.constants.APIConstants.*;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -56,9 +57,7 @@ import java.util.regex.Pattern;
 public class GmailController {
     private static final Logger logger = LoggerFactory.getLogger(GmailController.class);
     GmailService gmailService;
-
-    private static final String APPLICATION_NAME = "SafeQR App";
-    private static HttpTransport httpTransport;
+    private static HttpTransport httpTransport = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static com.google.api.services.gmail.Gmail client;
 
@@ -80,7 +79,7 @@ public class GmailController {
         this.gmailService = gmailService;
     }
 
-    @RequestMapping(value = "/gmail/login", method = RequestMethod.GET)
+    @GetMapping(value = "/gmail/login")
     public RedirectView googleConnectionStatus(HttpServletRequest request) throws Exception {
         return new RedirectView(authorize());
     }
@@ -102,18 +101,17 @@ public class GmailController {
                 //.setApprovalPrompt("force") // force refresh token
                 ;
 
-        System.out.println("gmail authorizationUrl ->" + authorizationUrl);
+        logger.info("gmail authorizationUrl -> {}", authorizationUrl);
         return authorizationUrl.build();
     }
 
-    @RequestMapping(value = "/gmail/callback", method = RequestMethod.GET, params = "code")
+    @GetMapping(value = "/gmail/callback", params = "code")
     public ResponseEntity<String> oauth2Callback(@RequestParam(value = "code") String code) {
 
         // System.out.println("code->" + code + " userId->" + userId + "
         // query->" + query);
-
         JSONObject json = new JSONObject();
-        JSONArray emailArray = new JSONArray();
+
 
         // String message;
         try {
@@ -123,44 +121,6 @@ public class GmailController {
             logger.info(credential.getRefreshToken());
             logger.info(credential.toString());
 
-            // Build the Gmail service
-            Gmail service = new Gmail.Builder(httpTransport, JSON_FACTORY, credential)
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-
-            // Get the list of messages
-            ListMessagesResponse listResponse = service.users().messages().list("me").execute();
-            List<Message> messages = listResponse.getMessages();
-
-            if (messages != null && !messages.isEmpty()) {
-                for (Message message : messages) {
-                    Message fullMessage = service.users().messages().get("me", message.getId()).setFormat("full").execute();
-
-                    if (containsQRCode(fullMessage)) {
-                        JSONObject emailJson = new JSONObject();
-                        emailJson.put("id", fullMessage.getId());
-
-                        // Extract subject
-                        String subject = "";
-                        for (MessagePartHeader header : fullMessage.getPayload().getHeaders()) {
-                            if (header.getName().equals("Subject")) {
-                                subject = header.getValue();
-                                break;
-                            }
-                        }
-                        emailJson.put("subject", subject);
-
-                        // Extract snippet
-                        emailJson.put("snippet", fullMessage.getSnippet());
-
-                        emailArray.put(emailJson);
-                    }
-                }
-            }
-
-            json.put("emails_with_qr_codes", emailArray);
-
-
 
         } catch (Exception e) {
 
@@ -169,6 +129,56 @@ public class GmailController {
         }
 
         return new ResponseEntity<>(json.toString(), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/gmail/getEmails", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getUserEmails(@RequestHeader(name = "accessToken") String accessToken) throws IOException {
+        logger.info("Invoking GET User Emails endpoints");
+        if (accessToken == null || accessToken.isEmpty()) {
+            return new ResponseEntity<>("Access token is missing", HttpStatus.BAD_REQUEST);
+        }
+
+        JSONObject json;
+        try {
+            json = getEmail(accessToken);
+        } catch (Exception e) {
+            logger.error("Error getting emails: ", e);
+            return new ResponseEntity<>("Failed to get emails", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(json.toString(), HttpStatus.OK);
+    }
+
+    private Gmail getGmailService(String accessToken) {
+        Credential userCredentials = new Credential(BearerToken.authorizationHeaderAccessMethod()).setAccessToken(accessToken);
+        return new Gmail.Builder(httpTransport, JSON_FACTORY, userCredentials)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
+
+    private JSONObject getEmail(String accessToken) throws IOException {
+        JSONObject json = new JSONObject();
+        JSONArray emailArray = new JSONArray();
+
+        // Build the Gmail service
+        Gmail service = getGmailService(accessToken);
+        logger.info("service-> {}", service);
+
+        // Get the list of messages
+        ListMessagesResponse listResponse = service.users().messages().list("me").execute();
+        List<Message> messages = listResponse.getMessages();
+
+        if (messages != null && !messages.isEmpty()) {
+            Message message = service.users().messages().get("me", messages.get(0).getId()).setFormat("full").execute();
+            logger.info("message-> {}", message);
+
+            if (containsQRCode(message)) {
+                emailArray.put(message.getId());
+            }
+        }
+
+        json.put("emails_with_qr_codes", emailArray);
+        return json;
     }
     private boolean containsQRCode(Message message) throws IOException {
         if (message.getPayload().getParts() != null) {

@@ -4,6 +4,7 @@ public class APIConstants {
     private APIConstants() {
         //private constructor to prevent instantiation
     }
+    public static final String APPLICATION_NAME = "SafeQR";
     public static final String API_VERSION = "v1";
     public static final String API_URL_QRCODE_GET_ALL = "/qrcodetypes";
     public static final String API_URL_QRCODE_SCAN = "/qrcodetypes/scan";

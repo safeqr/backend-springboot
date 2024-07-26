@@ -85,21 +85,25 @@
 			<artifactId>google-api-services-gmail</artifactId>
 			<version>v1-rev20240520-2.0.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20210307</version>
+			<version>20240303</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
 		<dependency>
 			<groupId>com.google.zxing</groupId>
 			<artifactId>core</artifactId>
-			<version>3.4.1</version>
+			<version>3.5.3</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
 		<dependency>
 			<groupId>com.google.zxing</groupId>
 			<artifactId>javase</artifactId>
-			<version>3.4.1</version>
+			<version>3.5.3</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
