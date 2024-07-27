@@ -176,7 +176,7 @@ public class GmailService {
         MessagePartBody attachPart = service.users().messages().attachments().get("me", messageId, attachmentId).execute();
         byte[] imageBytes = Base64.decodeBase64(attachPart.getData());
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-        ImageIO.write(image, "png", new File("debug_image.png"));
+        // ImageIO.write(image, "png", new File("debug_image.png"));
         return decodeQRCodes(image);
     }
 
