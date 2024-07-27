@@ -7,9 +7,11 @@ import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.multi.qrcode.QRCodeMultiReader;
+import com.safeqr.app.gmail.dto.ScannedGmailResponseDto;
+import com.safeqr.app.gmail.model.EmailMessage;
+import com.safeqr.app.gmail.model.QRCodeByContentId;
+import com.safeqr.app.gmail.model.QRCodeByURL;
 import org.apache.commons.codec.binary.Base64;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -25,11 +27,14 @@ import com.google.api.services.gmail.Gmail;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.Thread;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,55 +54,82 @@ public class GmailService {
                 .build();
     }
 
-    public JSONObject getEmail(String accessToken) throws IOException, InterruptedException {
-        JSONObject json = new JSONObject();
-        JSONArray emailArray = new JSONArray();
+    private static final long MAX_RESULTS = 100L;
 
-        // Build the Gmail service
+    public ScannedGmailResponseDto getEmail(String accessToken) throws IOException, InterruptedException {
         Gmail service = getGmailService(accessToken);
-        logger.info("service-> {}", service);
+        logger.info("Gmail service initialized: {}", service);
 
-        // Get the list of messages
-        ListMessagesResponse listResponse = service.users().messages().list("me").execute();
-        List<Message> messages = listResponse.getMessages();
+        List<EmailMessage> emailMessagesList = new ArrayList<>();
+        String userId = "me";
+        String nextPageToken = null;
 
-        for (Message message : messages) {
-            message = service.users().messages().get("me", message.getId()).setFormat("full").execute();
-            List<MessagePart> parts = message.getPayload().getParts();
-            Set<String> attachmentIds = new HashSet<>();
-            Set<String> imageUrls = new HashSet<>();
-            processPartsRecursively(parts, attachmentIds, imageUrls);
+        do {
+            ListMessagesResponse listResponse = fetchMessages(service, userId, nextPageToken);
+            List<Message> messages = listResponse.getMessages();
+            nextPageToken = listResponse.getNextPageToken();
 
-            // Extract and log the email subject
-            String subject = getSubject(message);
-            logger.info("Email Subject-> {}", subject);
-
-            if (attachmentIds.isEmpty() && imageUrls.isEmpty())
-                continue;
-
-            String messageId = message.getId();
-            logger.info("messageId-> {}", messageId);
-            String historyId = String.valueOf(message.getHistoryId());
-            logger.info("historyId-> {}", historyId);
-
-            for (String attachmentId : attachmentIds) {
-                Optional<String> attachment = findAttachmentIdByCid(parts, attachmentId);
-                logger.info("attachment-> {}", attachment);
-                if (attachment.isPresent()) {
-                    List<String> qrCodeValue = processAttachment(service, messageId, attachment.get());
-                    emailArray.put(qrCodeValue);
+            for (Message message : messages) {
+                EmailMessage emailMessage = processMessage(service, userId, message);
+                if (emailMessage != null) {
+                    emailMessagesList.add(emailMessage);
                 }
             }
-            for (String imageUrl : imageUrls) {
-                List<String> qrCodeValue = scanQRCodeFromUrl(imageUrl);
-                if (qrCodeValue != null) {
-                    emailArray.put(qrCodeValue);
+        } while (nextPageToken != null);
+
+        return new ScannedGmailResponseDto(emailMessagesList);
+    }
+
+    private ListMessagesResponse fetchMessages(Gmail service, String userId, String pageToken) throws IOException {
+        return service.users().messages().list(userId)
+                .setPageToken(pageToken)
+                .setMaxResults(MAX_RESULTS)
+                .execute();
+    }
+
+    private EmailMessage processMessage(Gmail service, String userId, Message message) throws IOException, InterruptedException {
+        message = service.users().messages().get(userId, message.getId()).setFormat("full").execute();
+        List<MessagePart> parts = message.getPayload().getParts();
+        Set<String> attachmentIds = new HashSet<>();
+        Set<String> imageUrls = new HashSet<>();
+        processPartsRecursively(parts, attachmentIds, imageUrls);
+
+        if (attachmentIds.isEmpty() && imageUrls.isEmpty()) {
+            return null;
+        }
+
+        String subject = getSubject(message);
+        logger.info("Email Subject: {}", subject);
+        logger.info("Message ID: {}", message.getId());
+        logger.info("History ID: {}", message.getHistoryId());
+
+        EmailMessage emailMessage = new EmailMessage(message.getId(), subject, String.valueOf(message.getHistoryId()));
+
+        processAttachments(service, message.getId(), parts, attachmentIds, emailMessage);
+        processImageUrls(imageUrls, emailMessage);
+
+        return emailMessage.hasQRCodes() ? emailMessage : null;
+    }
+
+    private void processAttachments(Gmail service, String messageId, List<MessagePart> parts, Set<String> attachmentIds, EmailMessage emailMessage) throws IOException {
+        for (String attachmentId : attachmentIds) {
+            Optional<String> attachment = findAttachmentIdByCid(parts, attachmentId);
+            if (attachment.isPresent()) {
+                List<String> qrCodeValue = processAttachment(service, messageId, attachment.get());
+                if (!qrCodeValue.isEmpty()) {
+                    emailMessage.addQRCodeByContentId(new QRCodeByContentId(attachmentId, attachment.get(), qrCodeValue, qrCodeValue.size()));
                 }
             }
         }
-        logger.info("Total Emails-> {}", messages.size());
-        json.put("qr_codes", emailArray);
-        return json;
+    }
+
+    private void processImageUrls(Set<String> imageUrls, EmailMessage emailMessage) throws IOException {
+        for (String imageUrl : imageUrls) {
+            List<String> qrCodeValue = scanQRCodeFromUrl(imageUrl);
+            if (!qrCodeValue.isEmpty()) {
+                emailMessage.addQRCodeByURL(new QRCodeByURL(imageUrl, qrCodeValue, qrCodeValue.size()));
+            }
+        }
     }
 
     private String getSubject(Message message) {
@@ -140,35 +172,49 @@ public class GmailService {
             }
         }
     }
-    private List<String> scanQRCodeFromUrl(String imageUrl) throws IOException, InterruptedException {
+    private List<String> scanQRCodeFromUrl(String imageUrl) {
         try {
             BufferedImage image = downloadImageFromUrl(imageUrl);
             if (image != null) {
                 return decodeQRCodes(image);
             }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid URI scheme for URL: {} -> {}", imageUrl, e.getMessage());
         } catch(URISyntaxException e) {
             logger.error("Error while scanning QR code from URL", e);
         }
-        return null;
+        return Collections.emptyList();
     }
     // Download the image from the given URL
-    private BufferedImage downloadImageFromUrl(String imageUrl) throws IOException, InterruptedException, URISyntaxException {
-        HttpClient client = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.ALWAYS)
-                .build();
-        logger.info("imageUrl-> {}", imageUrl);
-        // Encode the URL
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(imageUrl.replace(" ", "%20")))
-                .GET()
-                .build();
+    private BufferedImage downloadImageFromUrl(String imageUrl) throws URISyntaxException {
+        try {
+            imageUrl = imageUrl.replace(" ", "%20");
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.ALWAYS)
+                    .build();
+            logger.info("Downloading image from URL: {}", imageUrl);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(imageUrl))
+                    .GET()
+                    .build();
 
-        HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-        if (response.statusCode() == 200) {
-            byte[] imageBytes = response.body();
-            return ImageIO.read(new ByteArrayInputStream(imageBytes));
-        } else {
-            logger.error("Failed to download image. HTTP response code: {}", response.statusCode());
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response.statusCode() == 200) {
+                byte[] imageBytes = response.body();
+                return ImageIO.read(new ByteArrayInputStream(imageBytes));
+            } else {
+                logger.warn("Failed to download image. HTTP response code: {}", response.statusCode());
+            }
+        } catch (URISyntaxException e) {
+            logger.warn("Invalid URL: {} -> {}", imageUrl, e.getMessage());
+        } catch (HttpTimeoutException e) {
+            logger.warn("Request timed out for URL: {} -> {}", imageUrl, e.getMessage());
+        } catch (ConnectException e) {
+            logger.warn("Failed to connect to URL: {} -> {}", imageUrl, e.getMessage());
+        } catch (IOException | InterruptedException e) {
+            logger.warn("Error downloading image from URL: {} -> {}", imageUrl, e.getMessage());
+            Thread.currentThread().interrupt();
         }
         return null;
     }

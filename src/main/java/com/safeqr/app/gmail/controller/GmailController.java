@@ -1,6 +1,7 @@
 package com.safeqr.app.gmail.controller;
 
 import com.google.api.services.gmail.model.*;
+import com.safeqr.app.gmail.dto.ScannedGmailResponseDto;
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
@@ -106,7 +107,7 @@ public class GmailController {
             return new ResponseEntity<>("Access token is missing", HttpStatus.BAD_REQUEST);
         }
 
-        return new ResponseEntity<>(gmailService.getEmail(accessToken).toString(), HttpStatus.OK);
+        return new ResponseEntity<>(gmailService.getEmail(accessToken), HttpStatus.OK);
     }
 }
 
