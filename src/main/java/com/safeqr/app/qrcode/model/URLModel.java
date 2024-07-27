@@ -5,6 +5,7 @@ import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.URLEntity;
 import com.safeqr.app.qrcode.service.URLVerificationService;
+import jakarta.transaction.Transactional;
 import lombok.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ public final class URLModel extends QRCodeModel<URLEntity> {
         this.urlVerificationService = urlVerificationService;
         details = null;
     }
-
+    @Transactional
     @Override
     public void setDetails() {
         String url = data.getContents();
@@ -35,11 +36,10 @@ public final class URLModel extends QRCodeModel<URLEntity> {
             urlVerificationService.countAndTrackRedirects(url, details);
             // set qrCode Identifier
             details.setQrCodeId(data.getId());
-
             // Insert into URL table
             urlVerificationService.insertDB(details);
 
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             logger.error("Error: ", e);
         }
     }
