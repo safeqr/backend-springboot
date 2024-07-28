@@ -10,6 +10,7 @@ public class EmailMessage {
     private String messageId;
     private String subject;
     private String historyId;
+    private String date;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     List<QRCodeByContentId> qrCodeByContentId;
@@ -17,10 +18,11 @@ public class EmailMessage {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     List<QRCodeByURL> qrCodeByURL;
 
-    public EmailMessage(String messageId, String subject, String historyId) {
+    public EmailMessage(String messageId, String subject, String historyId, String date) {
         this.messageId = messageId;
         this.subject = subject;
         this.historyId = historyId;
+        this.date = date;
         this.qrCodeByContentId = new ArrayList<>();
         this.qrCodeByURL = new ArrayList<>();
     }

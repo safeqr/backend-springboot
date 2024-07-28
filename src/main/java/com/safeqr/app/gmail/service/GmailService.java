@@ -46,6 +46,7 @@ public class GmailService {
     private static final Logger logger = LoggerFactory.getLogger(GmailService.class);
     private static final HttpTransport httpTransport = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private static final long MAX_RESULTS = 100L;
 
     private Gmail getGmailService(String accessToken) {
         Credential userCredentials = new Credential(BearerToken.authorizationHeaderAccessMethod()).setAccessToken(accessToken);
@@ -54,8 +55,7 @@ public class GmailService {
                 .build();
     }
 
-    private static final long MAX_RESULTS = 100L;
-
+    // Scan all emails in the user's inbox.
     public ScannedGmailResponseDto getEmail(String accessToken) throws IOException, InterruptedException {
         Gmail service = getGmailService(accessToken);
         logger.info("Gmail service initialized: {}", service);
@@ -63,12 +63,12 @@ public class GmailService {
         List<EmailMessage> emailMessagesList = new ArrayList<>();
         String userId = "me";
         String nextPageToken = null;
-
+        // Fetching email messages with page token and setting max results, Default value is 100.
         do {
             ListMessagesResponse listResponse = fetchMessages(service, userId, nextPageToken);
             List<Message> messages = listResponse.getMessages();
             nextPageToken = listResponse.getNextPageToken();
-
+            // Iterate all the messages and add to emailMessagesList only if it has a valid QR code.
             for (Message message : messages) {
                 EmailMessage emailMessage = processMessage(service, userId, message);
                 if (emailMessage != null) {
@@ -79,15 +79,15 @@ public class GmailService {
 
         return new ScannedGmailResponseDto(emailMessagesList);
     }
-
+    // Fetching email messages with page token and setting max results
     private ListMessagesResponse fetchMessages(Gmail service, String userId, String pageToken) throws IOException {
         return service.users().messages().list(userId)
                 .setPageToken(pageToken)
                 .setMaxResults(MAX_RESULTS)
                 .execute();
     }
-
-    private EmailMessage processMessage(Gmail service, String userId, Message message) throws IOException, InterruptedException {
+    // Processing email message and returning EmailMessage object if it has a valid QR code.
+    private EmailMessage processMessage(Gmail service, String userId, Message message) throws IOException {
         message = service.users().messages().get(userId, message.getId()).setFormat("full").execute();
         List<MessagePart> parts = message.getPayload().getParts();
         Set<String> attachmentIds = new HashSet<>();
@@ -98,19 +98,20 @@ public class GmailService {
             return null;
         }
 
-        String subject = getSubject(message);
+        String subject = getHeader(message, "Subject");
+        String emailDate = getHeader(message, "Date");
         logger.info("Email Subject: {}", subject);
         logger.info("Message ID: {}", message.getId());
         logger.info("History ID: {}", message.getHistoryId());
 
-        EmailMessage emailMessage = new EmailMessage(message.getId(), subject, String.valueOf(message.getHistoryId()));
+        EmailMessage emailMessage = new EmailMessage(message.getId(), subject, String.valueOf(message.getHistoryId()), emailDate);
 
         processAttachments(service, message.getId(), parts, attachmentIds, emailMessage);
         processImageUrls(imageUrls, emailMessage);
 
         return emailMessage.hasQRCodes() ? emailMessage : null;
     }
-
+    // Process all the attachments.
     private void processAttachments(Gmail service, String messageId, List<MessagePart> parts, Set<String> attachmentIds, EmailMessage emailMessage) throws IOException {
         for (String attachmentId : attachmentIds) {
             Optional<String> attachment = findAttachmentIdByCid(parts, attachmentId);
@@ -122,8 +123,8 @@ public class GmailService {
             }
         }
     }
-
-    private void processImageUrls(Set<String> imageUrls, EmailMessage emailMessage) throws IOException {
+    // Process all the image URLs.
+    private void processImageUrls(Set<String> imageUrls, EmailMessage emailMessage)  {
         for (String imageUrl : imageUrls) {
             List<String> qrCodeValue = scanQRCodeFromUrl(imageUrl);
             if (!qrCodeValue.isEmpty()) {
@@ -131,21 +132,22 @@ public class GmailService {
             }
         }
     }
-
-    private String getSubject(Message message) {
+    // Find the header with the given name.
+    private String getHeader(Message message, String name) {
         return message.getPayload().getHeaders().stream()
-                .filter(header -> "Subject".equals(header.getName()))
+                .filter(header -> name.equalsIgnoreCase(header.getName()))
                 .findFirst()
                 .map(MessagePartHeader::getValue)
-                .orElse("No Subject");
+                .orElse("No " + name);
     }
+    // Find the attachment ID in the given message part.
     private Optional<String> findAttachmentIdByCid(List<MessagePart> parts, String cid) {
         return parts.stream()
                 .flatMap(part -> Stream.concat(findAttachmentIdInCurrentPart(part, cid).stream(), Optional.ofNullable(part.getParts())
                 .flatMap(subParts -> findAttachmentIdByCid(subParts, cid)).stream()))
                 .findFirst();
     }
-
+    // Find the attachment ID in the message subpart.
     private Optional<String> findAttachmentIdInCurrentPart(MessagePart part, String cid) {
         return Optional.ofNullable(part.getHeaders())
                 .flatMap(headers -> headers.stream()
@@ -153,7 +155,7 @@ public class GmailService {
                 .findFirst()
                 .map(header -> part.getBody().getAttachmentId()));
     }
-
+    // Check if the header is a Content-ID header with the given CID.
     private boolean isContentIdHeader(MessagePartHeader header, String cid) {
         return "Content-ID".equalsIgnoreCase(header.getName()) && header.getValue().contains(cid);
     }
@@ -195,6 +197,7 @@ public class GmailService {
             logger.info("Downloading image from URL: {}", imageUrl);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(imageUrl))
+                    .header("User-Agent", "Mozilla/5.0")
                     .GET()
                     .build();
 
@@ -207,13 +210,18 @@ public class GmailService {
                 logger.warn("Failed to download image. HTTP response code: {}", response.statusCode());
             }
         } catch (URISyntaxException e) {
-            logger.warn("Invalid URL: {} -> {}", imageUrl, e.getMessage());
+            logger.error("Invalid URL: {} -> {}", imageUrl, e.getMessage());
         } catch (HttpTimeoutException e) {
-            logger.warn("Request timed out for URL: {} -> {}", imageUrl, e.getMessage());
+            logger.error("Request timed out for URL: {} -> {}", imageUrl, e.getMessage());
         } catch (ConnectException e) {
             logger.warn("Failed to connect to URL: {} -> {}", imageUrl, e.getMessage());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             logger.warn("Error downloading image from URL: {} -> {}", imageUrl, e.getMessage());
+            if (Thread.currentThread().isInterrupted()) {
+                logger.warn("Thread was interrupted during IO operation for URL: {}", imageUrl);
+            }
+        } catch (InterruptedException e) {
+            logger.warn("Thread was interrupted during HTTP request for URL: {} -> {}", imageUrl, e.getMessage());
             Thread.currentThread().interrupt();
         }
         return null;
@@ -245,16 +253,14 @@ public class GmailService {
                     qrCodeValues.add(result.getText());
                     logger.info("Detected QR code: {}", result.getText());
                 }
-            } else {
-                logger.info("No QR codes found in the image");
             }
         } catch (NotFoundException e) {
-            logger.info("No QR codes found in the image");
+            // No QR codes found
         } catch (Exception e) {
             logger.error("Error decoding QR codes", e);
         }
-
-        logger.info("Total QR codes found: {}", qrCodeValues.size());
+        if (!qrCodeValues.isEmpty())
+            logger.info("Total QR codes found: {}", qrCodeValues.size());
         return qrCodeValues;
     }
 
