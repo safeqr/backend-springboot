@@ -23,5 +23,9 @@ public class APIConstants {
     public static final String API_URL_USER_SET_BOOKMARK = "/user/setBookmark";
     public static final String API_URL_USER_DELETE_BOOKMARK = "/user/deleteBookmark";
     public static final String API_URL_USER_DELETE_ALL_BOOKMARK = "/user/deleteAllBookmark";
+    public static final String API_URL_GMAIL_GET_EMAILS = "/gmail/getEmails";
+    public static final String API_URL_GMAIL_GET_SCANNED_EMAILS = "/gmail/getScannedEmails";
+
+
 
 }

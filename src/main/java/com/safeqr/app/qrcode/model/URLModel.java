@@ -1,7 +1,6 @@
 package com.safeqr.app.qrcode.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.safeqr.app.qrcode.entity.EmailEntity;
 import com.safeqr.app.qrcode.entity.QRCodeEntity;
 import com.safeqr.app.qrcode.entity.URLEntity;
 import com.safeqr.app.qrcode.service.URLVerificationService;
@@ -12,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public final class URLModel extends QRCodeModel<URLEntity> {
