@@ -33,4 +33,7 @@ public class UserEntity {
     @Column(name = "roles", columnDefinition = "text[]")
     private List<String> roles;
     private String status;
+
+    @Column(name = "gmail_history_id")
+    private Long gmailHistoryId;
 }

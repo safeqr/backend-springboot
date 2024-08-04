@@ -1,32 +1,53 @@
 package com.safeqr.app.gmail.service;
 
 import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.Credential;
+
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.*;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.multi.qrcode.QRCodeMultiReader;
+import com.google.zxing.qrcode.encoder.QRCode;
 import com.safeqr.app.gmail.dto.ScannedGmailResponseDto;
+import com.safeqr.app.gmail.entity.GmailCidEntity;
+import com.safeqr.app.gmail.entity.GmailEmailEntity;
+import com.safeqr.app.gmail.entity.GmailUrlEntity;
 import com.safeqr.app.gmail.model.EmailMessage;
 import com.safeqr.app.gmail.model.QRCodeByContentId;
 import com.safeqr.app.gmail.model.QRCodeByURL;
+import com.safeqr.app.gmail.repository.GmailCidRespository;
+import com.safeqr.app.gmail.repository.GmailEmailRespository;
+import com.safeqr.app.gmail.repository.GmailUrlsRespository;
+import com.safeqr.app.qrcode.model.QRCodeModel;
+import com.safeqr.app.qrcode.service.QRCodeTypeService;
+import com.safeqr.app.user.service.UserService;
+import com.safeqr.app.utils.DateParsingUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.gmail.Gmail;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.lang.Thread;
 import java.net.ConnectException;
 import java.net.URI;
@@ -35,49 +56,287 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.api.client.googleapis.auth.oauth2.GoogleOAuthConstants.TOKEN_SERVER_URL;
 import static com.safeqr.app.constants.APIConstants.APPLICATION_NAME;
 
 @Service
 public class GmailService {
+    @Value("${gmail.client.clientId}")
+    private String clientId;
+
+    @Value("${gmail.client.clientSecret}")
+    private String clientSecret;
+
+    private final GmailEmailRespository gmailEmailRespository;
+    private final GmailCidRespository gmailCidRespository;
+    private final GmailUrlsRespository gmailUrlsRespository;
+    private final QRCodeTypeService qrCodeTypeService;
+    private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(GmailService.class);
     private static final HttpTransport httpTransport = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final long MAX_RESULTS = 100L;
 
-    private Gmail getGmailService(String accessToken) {
-        Credential userCredentials = new Credential(BearerToken.authorizationHeaderAccessMethod()).setAccessToken(accessToken);
+    public GmailService(GmailEmailRespository gmailEmailRespository,
+                        GmailCidRespository gmailCidRespository,
+                        GmailUrlsRespository gmailUrlsRespository,
+                        QRCodeTypeService qrCodeTypeService,
+                        UserService userService) {
+        this.gmailEmailRespository = gmailEmailRespository;
+        this.gmailCidRespository = gmailCidRespository;
+        this.gmailUrlsRespository = gmailUrlsRespository;
+        this.qrCodeTypeService = qrCodeTypeService;
+        this.userService = userService;
+    }
+
+    private Gmail getGmailService(String accessToken, String refreshToken) throws IOException {
+        Credential userCredentials = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
+                .setTransport(httpTransport)
+                .setJsonFactory(JSON_FACTORY)
+                .setTokenServerUrl(new GenericUrl(TOKEN_SERVER_URL))
+                .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
+                .build()
+                .setAccessToken(accessToken)
+                .setRefreshToken(refreshToken);
+
         return new Gmail.Builder(httpTransport, JSON_FACTORY, userCredentials)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
+    // Renew the access token if it has expired using the refresh token.
+    private String refreshAccessToken(String refreshToken) throws IOException {
+        TokenResponse response = new GoogleRefreshTokenRequest(
+                httpTransport, JSON_FACTORY, refreshToken, clientId, clientSecret)
+                .execute();
+        return response.getAccessToken();
+    }
 
+    private Gmail refreshAndGetGmailService(String accessToken, String refreshToken) throws IOException {
+        try {
+            return getGmailService(accessToken, refreshToken);
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 401) {
+                logger.info("Access token expired. Refreshing token...");
+                String newAccessToken = refreshAccessToken(refreshToken);
+                return getGmailService(newAccessToken, refreshToken);
+            }
+            throw e;
+        }
+    }
+
+    // Async method to scan all emails in the user's inbox to prevent timeout.
+    @Async
+    public void getEmailAsync(String userId, String accessToken, String refreshToken) {
+        try {
+            ScannedGmailResponseDto result = getEmail(userId, accessToken, refreshToken);
+            CompletableFuture.completedFuture(result);
+        } catch (IOException e) {
+            logger.error("Error processing Gmail", e);
+        }
+    }
     // Scan all emails in the user's inbox.
-    public ScannedGmailResponseDto getEmail(String accessToken) throws IOException, InterruptedException {
-        Gmail service = getGmailService(accessToken);
+    public ScannedGmailResponseDto getEmail(String userId, String accessToken, String refreshToken) throws IOException {
+        Gmail service = refreshAndGetGmailService(accessToken, refreshToken);
         logger.info("Gmail service initialized: {}", service);
 
         List<EmailMessage> emailMessagesList = new ArrayList<>();
-        String userId = "me";
+        String meUserId = "me";
         String nextPageToken = null;
         // Fetching email messages with page token and setting max results, Default value is 100.
         do {
-            ListMessagesResponse listResponse = fetchMessages(service, userId, nextPageToken);
+
+//            ListHistoryResponse historyResponse = service.users().history().list(meUserId)
+//                    .setStartHistoryId(BigInteger.valueOf(689335))
+//                    .execute();
+//
+//            List<History> historyList = historyResponse.getHistory();
+//
+//            for (History history : historyList) {
+//                logger.info("History Id: {}, Message Id: {}, Message Snippet: {}", history.getId(), history.getMessages().get(0).getId(), history.getMessages().get(0).getHistoryId());
+//            }
+            ListMessagesResponse listResponse = fetchMessages(service, meUserId, nextPageToken);
             List<Message> messages = listResponse.getMessages();
             nextPageToken = listResponse.getNextPageToken();
-            // Iterate all the messages and add to emailMessagesList only if it has a valid QR code.
+
+            // Iterate all the messages and save to gmail db only if it has a valid QR code.
             for (Message message : messages) {
-                EmailMessage emailMessage = processMessage(service, userId, message);
+                EmailMessage emailMessage = processMessage(service, meUserId, message);
                 if (emailMessage != null) {
                     emailMessagesList.add(emailMessage);
+                    // Save email message to database.
+                    saveEmailMessageAndScanQRCode(userId, emailMessage);
                 }
             }
         } while (nextPageToken != null);
 
+        // Update user's history id.
+        // TODO: Update user's history id.
+
         return new ScannedGmailResponseDto(emailMessagesList);
+    }
+    // Save email message to database and scan QR code.
+    private void saveEmailMessageAndScanQRCode(String userId, EmailMessage emailMessage) {
+        GmailEmailEntity gmailEmailEntity = saveEmailMessage(userId, emailMessage);
+
+        if (gmailEmailEntity != null) {
+            // Save QR codes by content ID
+            saveQRCodeByContentId(gmailEmailEntity, emailMessage.getQrCodeByContentId());
+
+            // Save QR codes by URL
+            saveQRCodeByURL(gmailEmailEntity, emailMessage.getQrCodeByURL());
+        } else {
+            logger.warn("Skipping QR code processing due to failure in saving email message.");
+        }
+    }
+    // Save to gmail_email table
+    private GmailEmailEntity saveEmailMessage(String userId, EmailMessage emailMessage) {
+        logger.info("userId: {}", userId);
+        OffsetDateTime dateReceived = DateParsingUtils.parseDate(emailMessage.getDate());
+        try {
+            GmailEmailEntity gmailEmailEntity = GmailEmailEntity.builder()
+                    .userId(userId)
+                    .messageId(emailMessage.getMessageId())
+                    .threadId(emailMessage.getThreadId())
+                    .historyId(Long.valueOf(emailMessage.getHistoryId()))
+                    .subject(emailMessage.getSubject())
+                    .dateReceived(dateReceived)
+                    .build();
+            return gmailEmailRespository.save(gmailEmailEntity);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+                logger.warn("Duplicate entry for userId: {}, messageId: {}", userId, emailMessage.getMessageId());
+            } else {
+                logger.error("Error saving to gmail_email table: {}", e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            logger.error("Error saving gmail_email table: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+
+    // Iterate through decoded contents found in attachment as content id and save to gmail_cid table
+    private void saveQRCodeByContentId(GmailEmailEntity gmailEmailEntity, List<QRCodeByContentId> qrCodeByContentIdList) {
+        qrCodeByContentIdList.forEach(cid -> {
+            cid.getDecodedContent().forEach(decodedContent -> {
+                try {
+                    QRCodeModel<?> qrCodeModel = qrCodeTypeService.scanGmailDecodedContents(gmailEmailEntity.getUserId(), decodedContent);
+                    GmailCidEntity gmailCidEntity = GmailCidEntity.builder()
+                            .gmailId(gmailEmailEntity.getId())
+                            .qrCodeId(qrCodeModel.getData().getId())
+                            .cid(cid.getCid())
+                            .attachmentId(cid.getAttachmentId())
+                            .decodedContent(decodedContent)
+                            .build();
+                    gmailCidRespository.save(gmailCidEntity);
+                } catch (Exception e) {
+                    logger.error("Error saving QR code by content ID to gmail_cid table: {}", e.getMessage(), e);
+                }
+            });
+        });
+    }
+    // Iterate through decoded content found in url and save to gmail_url table
+    private void saveQRCodeByURL(GmailEmailEntity gmailEmailEntity, List<QRCodeByURL> qrCodeByURLList) {
+        qrCodeByURLList.forEach(imageUrl -> {
+            imageUrl.getDecodedContent().forEach(decodedContent -> {
+                try {
+                    QRCodeModel<?> qrCodeModel = qrCodeTypeService.scanGmailDecodedContents(gmailEmailEntity.getUserId(), decodedContent);
+                    GmailUrlEntity gmailUrlEntity = GmailUrlEntity.builder()
+                            .gmailId(gmailEmailEntity.getId())
+                            .qrCodeId(qrCodeModel.getData().getId())
+                            .imageUrl(imageUrl.getUrl())
+                            .decodedContent(decodedContent)
+                            .build();
+                    gmailUrlsRespository.save(gmailUrlEntity);
+                } catch (Exception e) {
+                    logger.error("Error saving QR code by URL to gmail_urls table: {}", e.getMessage(), e);
+                }
+            });
+        });
+    }
+
+    // Fetching Scanned Gmail from database
+    public ScannedGmailResponseDto fetchScannedGmail(String userId){
+        // Fetching all emails from gmail_email table
+        List<GmailEmailEntity> userEmailsList = gmailEmailRespository.findByUserId(userId);
+        List<EmailMessage> emailMessageList = new ArrayList<>();
+
+        if (userEmailsList != null && !userEmailsList.isEmpty()) {
+            userEmailsList.forEach(email -> {
+                EmailMessage emailMessage = new EmailMessage(
+                        email.getMessageId(),
+                        email.getThreadId(),
+                        email.getSubject(),
+                        email.getHistoryId().toString(),
+                        email.getDateReceived().toString()
+                );
+                // Fetching all CIDs from gmail_cid table
+                List<GmailCidEntity> cidList = gmailCidRespository.findByGmailId(email.getId());
+                Map<String, QRCodeByContentId> qrCodeByContentIdMap = new HashMap<>();
+
+                for (GmailCidEntity cid : cidList) {
+                    String key = cid.getCid() + "-" + cid.getAttachmentId();
+                    QRCodeByContentId qrCodeByContentId = qrCodeByContentIdMap.get(key);
+
+                    if (qrCodeByContentId == null) {
+                        qrCodeByContentId = QRCodeByContentId.builder()
+                                .cid(cid.getCid())
+                                .attachmentId(cid.getAttachmentId())
+                                .decodedContent(new ArrayList<>())
+                                .totalQRCodeFound(0)
+                                .build();
+                        qrCodeByContentIdMap.put(key, qrCodeByContentId);
+                    }
+
+                    // Append decoded content to the existing list
+                    qrCodeByContentId.getDecodedContent().add(cid.getDecodedContent());
+
+                    // Fetch scanned QR code from database and add to message object
+                    emailMessage.addQRCodeModel(qrCodeTypeService.getScannedQRCodeDetailsInModel(cid.getQrCodeId()));
+
+                    qrCodeByContentId.setTotalQRCodeFound(qrCodeByContentId.getTotalQRCodeFound() + 1);
+                }
+
+                emailMessage.setQrCodeByContentId(new ArrayList<>(qrCodeByContentIdMap.values()));
+
+                // Fetching all URLs from gmail_urls table
+                List<GmailUrlEntity> urlList = gmailUrlsRespository.findByGmailId(email.getId());
+
+                Map<String, QRCodeByURL> qrCodeByURLMap = new HashMap<>();
+
+                for (GmailUrlEntity url : urlList) {
+                    String key = url.getImageUrl();
+                    QRCodeByURL qrCodeByURL = qrCodeByURLMap.get(key);
+
+                    if (qrCodeByURL == null) {
+                        qrCodeByURL = QRCodeByURL.builder()
+                                .url(url.getImageUrl())
+                                .decodedContent(new ArrayList<>())
+                                .totalQRCodeFound(0)
+                                .build();
+                        qrCodeByURLMap.put(key, qrCodeByURL);
+                    }
+
+                    // Append decoded content to the existing list
+                    qrCodeByURL.getDecodedContent().add(url.getDecodedContent());
+
+                    // Fetch scanned QR code from database and add to message object
+                    emailMessage.addQRCodeModel(qrCodeTypeService.getScannedQRCodeDetailsInModel(url.getQrCodeId()));
+                    qrCodeByURL.setTotalQRCodeFound(qrCodeByURL.getTotalQRCodeFound() + 1);
+                }
+
+                emailMessage.setQrCodeByURL(new ArrayList<>(qrCodeByURLMap.values()));
+
+                emailMessageList.add(emailMessage);
+
+            });
+        }
+        return ScannedGmailResponseDto.builder().messages(emailMessageList).build();
     }
     // Fetching email messages with page token and setting max results
     private ListMessagesResponse fetchMessages(Gmail service, String userId, String pageToken) throws IOException {
@@ -104,7 +363,7 @@ public class GmailService {
         logger.info("Message ID: {}", message.getId());
         logger.info("History ID: {}", message.getHistoryId());
 
-        EmailMessage emailMessage = new EmailMessage(message.getId(), subject, String.valueOf(message.getHistoryId()), emailDate);
+        EmailMessage emailMessage = new EmailMessage(message.getId(), message.getThreadId(), subject, String.valueOf(message.getHistoryId()), emailDate);
 
         processAttachments(service, message.getId(), parts, attachmentIds, emailMessage);
         processImageUrls(imageUrls, emailMessage);
@@ -290,5 +549,4 @@ public class GmailService {
         String lowerUrl = url.toLowerCase();
         return lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp");
     }
-
 }

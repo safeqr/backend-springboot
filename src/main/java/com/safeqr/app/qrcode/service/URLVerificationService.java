@@ -30,8 +30,9 @@ public class URLVerificationService {
 
     public URLEntity getURLEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
-        return urlRepository.findByQrCodeId(qrCodeId)
-                .orElseThrow(() -> new ResourceNotFoundExceptions("URL not found for QR Code id: " + qrCodeId));
+//        return urlRepository.findByQrCodeId(qrCodeId)
+//                .orElseThrow(() -> new ResourceNotFoundExceptions("URL not found for QR Code id: " + qrCodeId));
+        return urlRepository.findByQrCodeId(qrCodeId).orElse(null);
     }
 
     public void insertDB(URLEntity urlEntity) {

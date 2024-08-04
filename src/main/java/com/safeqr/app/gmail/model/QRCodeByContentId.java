@@ -1,5 +1,6 @@
 package com.safeqr.app.gmail.model;
 
+import com.safeqr.app.qrcode.model.QRCodeModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,4 +15,8 @@ public class QRCodeByContentId {
     private String attachmentId;
     private List<String> decodedContent;
     private int totalQRCodeFound;
+
+    public List<String> getDecodedContent() {
+        return decodedContent;
+    }
 }

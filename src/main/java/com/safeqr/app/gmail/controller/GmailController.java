@@ -27,8 +27,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import static com.safeqr.app.constants.APIConstants.*;
 import java.io.IOException;
+import java.lang.Thread;
 import java.util.*;
-
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 
 @RestController
@@ -100,14 +102,32 @@ public class GmailController {
         return new ResponseEntity<>(json.toString(), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/gmail/getEmails", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUserEmails(@RequestHeader(name = "accessToken") String accessToken) throws IOException, InterruptedException {
+    @GetMapping(value = API_URL_GMAIL_GET_SCANNED_EMAILS, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ScannedGmailResponseDto> getUserScannedEmails(@RequestHeader(name = "X-USER-ID") String userId) {
+        logger.info("Invoking GET User scanned Emails endpoint");
+        return ResponseEntity.ok(gmailService.fetchScannedGmail(userId));
+    }
+    @GetMapping(value = API_URL_GMAIL_GET_EMAILS, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getUserEmails(@RequestHeader(name = "accessToken") String accessToken,
+                                           @RequestHeader(name = "refreshToken") String refreshToken,
+                                           @RequestHeader(name = "X-USER-ID") String userId
+                                           )  {
         logger.info("Invoking GET Scan User Emails endpoints");
         if (accessToken == null || accessToken.isEmpty()) {
             return new ResponseEntity<>("Access token is missing", HttpStatus.BAD_REQUEST);
         }
+        logger.info("accessToken -> {}", accessToken);
+        logger.info("refreshToken -> {}", refreshToken);
+        logger.info("userId -> {}", userId);
 
-        return new ResponseEntity<>(gmailService.getEmail(accessToken), HttpStatus.OK);
+        CompletableFuture.runAsync(() -> {
+            gmailService.getEmailAsync(userId, accessToken, refreshToken);
+        }).exceptionally(throwable -> {
+            logger.error("Unexpected error occurred while processing emails", throwable);
+            return null;
+        });
+
+        return new ResponseEntity<>("Scan Gmail Request is being processed", HttpStatus.ACCEPTED);
     }
 }
 

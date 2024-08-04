@@ -68,13 +68,18 @@ public class QRCodeTypeService {
     }
     // Get scanned qrcode details
     public BaseScanResponse getScannedQRCodeDetails(UUID qrCodeId){
+        return BaseScanResponse.builder().qrcode(getScannedQRCodeDetailsInModel(qrCodeId)).build();
+    }
+
+    public QRCodeModel<?> getScannedQRCodeDetailsInModel(UUID qrCodeId){
         // Find scanned qr code in qr code table
         QRCodeEntity qrCodeEntity = qrCodeRepository.findById(qrCodeId)
                 .orElseThrow(() -> new ResourceNotFoundExceptions("QR Code not found with id: " + qrCodeId));
         logger.info("qrCodeEntity: {}", qrCodeEntity);
         QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(qrCodeEntity);
         logger.info("Retrieved details: {}", qrCodeModel.getDetails());
-        return BaseScanResponse.builder().qrcode(qrCodeModel).build();
+
+        return qrCodeModel;
     }
 
     // Process Scanned QR Code
@@ -108,6 +113,28 @@ public class QRCodeTypeService {
         qrCodeModel.setDetails();
 
         return BaseScanResponse.builder().qrcode(qrCodeModel).build();
+    }
+
+    @Transactional
+    public QRCodeModel<?> scanGmailDecodedContents(String userId, String data) {
+        logger.info("Scan Gmail content: userId={}, data={}", userId, data);
+
+        // Get the QR Code Type
+        QRCodeTypeEntity qrType = getQRCodeType(data);
+
+        // Insert the QR Code into main qrcode table
+        QRCodeEntity scannedQR = qrCodeRepository.save(QRCodeEntity.builder()
+                .userId(userId)
+                .contents(data)
+                .info(qrType)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        // Create the QR Code Instance based on the QR Code Type & insert into the respective table
+        QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(scannedQR);
+        qrCodeModel.setDetails();
+
+        return qrCodeModel;
     }
     // Returns Default type as text if it does not fit into any of the category
     private QRCodeTypeEntity getQRCodeType(String data) {
