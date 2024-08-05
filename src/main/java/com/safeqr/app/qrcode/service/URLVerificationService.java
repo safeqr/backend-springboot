@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -41,55 +44,84 @@ public class URLVerificationService {
         urlRepository.save(urlEntity);
     }
     // Function to breakdown URL into subdomain, domain, topLevelDomain, query params, fragment
-    public URLEntity breakdownURL(String urlString) throws MalformedURLException {
+    public URLEntity breakdownURL(String urlString) {
         URLEntity urlObj = new URLEntity();
         try {
-            // Ensure the URL is properly encoded
-            String encodedUrl = encodeUrl(urlString);
-            URI uri = new URI(encodedUrl);
-            URL url = uri.toURL();
-
+            URL url = new URI(encodeUrl(urlString)).toURL();
             String host = url.getHost();
-            // split host into subdomain, domain, topLevelDomain
-            String[] hostParts = host.split("\\.");
-            String subdomain = "";
 
-            if (hostParts.length >= 2) {
-                // set topLevelDomain to the last part of the host
-                urlObj.setTopLevelDomain(hostParts[hostParts.length - 1]);
-                // set domain to the second last part of the host
-                urlObj.setDomain(hostParts[hostParts.length - 2]);
-                // set subdomain to the first part of the host
-                if (hostParts.length > 2) {
-                    subdomain = String.join(".", java.util.Arrays.copyOfRange(hostParts, 0, hostParts.length - 2));
-                }
-            }
-            // set subdomain to URL host
-            urlObj.setSubdomain(subdomain);
+            urlObj.setHostnameEmbedding(checkDeceptiveUrl(url));
+            urlObj.setJavascriptCheck(checkForJavascriptCode(urlString));
 
-            String path = url.getPath();
-            //set path to URL path if it's not empty, otherwise set it to root path
-            urlObj.setPath(path.isEmpty() ? "/" : path);
+            populateHostDetails(host, urlObj);
 
-            String query = url.getQuery();
-            Map<String, String> queryParams = new HashMap<>();
-            if (query != null) {
-                // split query params into key value pairs
-                for (String param : query.split("&")) {
-                    String[] pair = param.split("=");
-                    queryParams.put(pair[0], pair.length > 1 ? pair[1] : "");
-                }
-                logger.info("queryParams: {}", queryParams);
-            }
-            // set query params to URL query
-            urlObj.setQuery(queryParams.toString());
-            // set fragment to URL ref
+            urlObj.setPath(Optional.ofNullable(url.getPath()).filter(p -> !p.isEmpty()).orElse("/"));
+            urlObj.setQuery(parseQueryParams(url.getQuery()));
             urlObj.setFragment(Optional.ofNullable(url.getRef()).orElse(""));
-        } catch (URISyntaxException | MalformedURLException e) {
+
+        } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
         }
         return urlObj;
     }
+
+    private void populateHostDetails(String host, URLEntity urlObj) {
+        String[] hostParts = host.split("\\.");
+        int length = hostParts.length;
+
+        if (length >= 2) {
+            urlObj.setTopLevelDomain(hostParts[length - 1]);
+            urlObj.setDomain(hostParts[length - 2]);
+            urlObj.setSubdomain(length > 2 ? String.join(".", Arrays.copyOfRange(hostParts, 0, length - 2)) : "");
+        }
+    }
+
+    private int checkDeceptiveUrl(URL url) {
+        String[] parts = url.getHost().split("\\.");
+        if (parts.length < 3) return 0;
+
+        Set<String> commonTlds = new HashSet<>(Arrays.asList("com", "org", "net", "edu", "gov"));
+
+        for (int i = parts.length - 2; i >= 1; i--) {
+            if (commonTlds.contains(parts[i]) && !commonTlds.contains(parts[i - 1]) && i != parts.length - 2) {
+                logger.warn("Potentially deceptive URL detected: {} (Suspicious domain: {}.{})",
+                        url, parts[i - 1], parts[i]);
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    private String checkForJavascriptCode(String url) {
+        // Patterns to detect 'javascript:', '<script>', and 'on*=' attributes
+        List<Pattern> maliciousPatterns = Arrays.asList(
+                Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE),
+                Pattern.compile("<\\s*script", Pattern.CASE_INSENSITIVE),
+                Pattern.compile("on\\w*\\s*=", Pattern.CASE_INSENSITIVE)
+        );
+
+        // Check for any malicious pattern in the URL
+        for (Pattern pattern : maliciousPatterns) {
+            Matcher matcher = pattern.matcher(url);
+            if (matcher.find()) {
+                return "Javascript found in URL!";
+            }
+        }
+        return "No Javascript in URL";
+    }
+    private String parseQueryParams(String query) {
+        if (query == null) return "{}";
+
+        Map<String, String> queryParams = Arrays.stream(query.split("&"))
+                .map(param -> param.split("="))
+                .collect(Collectors.toMap(
+                        pair -> pair[0],
+                        pair -> pair.length > 1 ? pair[1] : "",
+                        (oldValue, newValue) -> oldValue, HashMap::new));
+
+        return queryParams.toString();
+    }
+
     private String encodeUrl(String urlString) throws MalformedURLException {
         try {
             URL url = new URL(urlString);

@@ -11,6 +11,7 @@ import lombok.Builder;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,18 +50,24 @@ public class URLEntity {
 
     @Type(ListArrayType.class)
     @Column(name = "hsts_header", columnDefinition = "text[]")
-    private List<String> hstsHeader;
+    private List<String> hstsHeader = new ArrayList<>();
 
     @Type(ListArrayType.class)
     @Column(name = "ssl_stripping", columnDefinition = "boolean[]")
-    private List<Boolean> sslStripping;
+    private List<Boolean> sslStripping = new ArrayList<>();
 
     @Type(ListArrayType.class)
     @Column(name = "redirect_chain", columnDefinition = "text[]")
-    private List<String> redirectChain;
+    private List<String> redirectChain = new ArrayList<>();
+
+    @Column(name = "hostname_embedding")
+    private int hostnameEmbedding = 0;
+
+    @Column(name = "javascript_check")
+    private String javascriptCheck = "No Javascript in URL";
 
     @Column(name = "dns_error")
-    private String dnsError;
+    private String dnsError = "No Error Found.";
 
     @Column(name="certificate_subject_mismatch")
     private String certificateSubjectMismatch;
