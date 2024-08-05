@@ -64,11 +64,21 @@ public class URLEntity {
     private int hostnameEmbedding = 0;
 
     @Column(name = "javascript_check")
-    private String javascriptCheck = "No Javascript in URL";
+    private String javascriptCheck = "";
+
+    @Column(name = "shortening_service")
+    private String shorteningService = "";
+
+    @Column(name = "has_ip_address")
+    private String hasIpAddress = "";
+
+    @Type(ListArrayType.class)
+    @Column(name = "tracking_descriptions", columnDefinition = "text[]")
+    private List<String> trackingDescriptions = new ArrayList<>();
 
     @Column(name = "dns_error")
-    private String dnsError = "No Error Found.";
+    private String dnsError = "";
 
-    @Column(name="certificate_subject_mismatch")
-    private String certificateSubjectMismatch;
+    @Column(name="ssl_error")
+    private String sslError = "";
 }

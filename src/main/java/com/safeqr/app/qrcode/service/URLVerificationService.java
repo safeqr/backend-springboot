@@ -33,6 +33,29 @@ public class URLVerificationService {
         this.urlRepository = urlRepository;
     }
 
+    // Regular expression pattern for shortening services
+    private static final String SHORTENING_PATTERN =
+            "bit\\.ly|goo\\.gl|shorte\\.st|go2l\\.ink|x\\.co|ow\\.ly|t\\.co|tinyurl|tr\\.im|is\\.gd|cli\\.gs|" +
+                    "yfrog\\.com|migre\\.me|ff\\.im|tiny\\.cc|url4\\.eu|twit\\.ac|su\\.pr|twurl\\.nl|snipurl\\.com|" +
+                    "short\\.to|BudURL\\.com|ping\\.fm|post\\.ly|Just\\.as|bkite\\.com|snipr\\.com|fic\\.kr|loopt\\.us|" +
+                    "doiop\\.com|short\\.ie|kl\\.am|wp\\.me|rubyurl\\.com|om\\.ly|to\\.ly|bit\\.do|t\\.co|lnkd\\.in|" +
+                    "db\\.tt|qr\\.ae|adf\\.ly|goo\\.gl|bitly\\.com|cur\\.lv|tinyurl\\.com|ow\\.ly|bit\\.ly|ity\\.im|" +
+                    "q\\.gs|is\\.gd|po\\.st|bc\\.vc|twitthis\\.com|u\\.to|j\\.mp|buzurl\\.com|cutt\\.us|u\\.bb|yourls\\.org|" +
+                    "x\\.co|prettylinkpro\\.com|scrnch\\.me|filoops\\.info|vzturl\\.com|qr\\.net|1url\\.com|tweez\\.me|v\\.gd|" +
+                    "tr\\.im|link\\.zip\\.net";
+
+    // Regular expression pattern to match various IP address formats
+    private static final String IP_PATTERN =
+            "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+                    "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\/)|" +
+                    "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+                    "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\/)|" +
+                    "((0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\/)" +
+                    "(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|" +
+                    "([0-9]+(?:\\.[0-9]+){3}:[0-9]+)|" +
+                    "((?:(?:\\d|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d|\\d)(?:\\/\\d{1,2})?)";
+
+
     public URLEntity getURLEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
 //        return urlRepository.findByQrCodeId(qrCodeId)
@@ -50,8 +73,17 @@ public class URLVerificationService {
             URL url = new URI(encodeUrl(urlString)).toURL();
             String host = url.getHost();
 
+            // Check for deceptive URL
             urlObj.setHostnameEmbedding(checkDeceptiveUrl(url));
+
+            // Check for Javascript code in url
             urlObj.setJavascriptCheck(checkForJavascriptCode(urlString));
+
+            // Check for url shortener
+            urlObj.setShorteningService(hasShorteningService(urlString));
+
+            // Check for IP address
+            urlObj.setHasIpAddress(hasIPAddress(urlString));
 
             populateHostDetails(host, urlObj);
 
@@ -59,6 +91,8 @@ public class URLVerificationService {
             urlObj.setQuery(parseQueryParams(url.getQuery()));
             urlObj.setFragment(Optional.ofNullable(url.getRef()).orElse(""));
 
+            // Check for tracking parameters
+            urlObj.setTrackingDescriptions(getTrackingDescriptions(url.getQuery()));
         } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
         }
@@ -74,6 +108,46 @@ public class URLVerificationService {
             urlObj.setDomain(hostParts[length - 2]);
             urlObj.setSubdomain(length > 2 ? String.join(".", Arrays.copyOfRange(hostParts, 0, length - 2)) : "");
         }
+    }
+    // List of common tracking parameters with their descriptions
+    private static final Map<String, String> TRACKING_DESCRIPTIONS = Map.ofEntries(
+            Map.entry("utm_source", "Campaign Source: Identifies which site sent the traffic."),
+            Map.entry("utm_medium", "Campaign Medium: Identifies what type of link was used."),
+            Map.entry("utm_campaign", "Campaign Name: Identifies a specific product promotion or campaign."),
+            Map.entry("utm_term", "Campaign Term: Identifies search terms."),
+            Map.entry("utm_content", "Campaign Content: Differentiates similar content or links within the same ad."),
+            Map.entry("gclid", "Google Click Identifier: Used by Google Ads to track clicks."),
+            Map.entry("fbclid", "Facebook Click Identifier: Used by Facebook to track clicks."),
+            Map.entry("tracking_id", "Tracking ID: General identifier for tracking purposes."),
+            Map.entry("affiliate_id", "Affiliate ID: Identifies traffic from affiliates."),
+            Map.entry("ref", "Referrer: Identifies the referrer site."),
+            Map.entry("referrer", "Referrer: Identifies the referrer site.")
+    );
+
+    // Regex pattern to capture key-value pairs in the query string
+    private static final Pattern PARAM_PATTERN = Pattern.compile(
+            "(?<key>[^=&]+)=(?<value>[^&]+)",
+            Pattern.CASE_INSENSITIVE
+    );
+
+    // Static method to detect and return tracking parameter descriptions in a URL
+    private List<String> getTrackingDescriptions(String query) {
+        if (query == null || query.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Matcher matcher = PARAM_PATTERN.matcher(query);
+        List<String> foundDescriptions = new ArrayList<>();
+
+        while (matcher.find()) {
+            String key = matcher.group("key").toLowerCase();
+            String value = URLDecoder.decode(matcher.group("value"), StandardCharsets.UTF_8);
+            if (TRACKING_DESCRIPTIONS.containsKey(key)) {
+                foundDescriptions.add(TRACKING_DESCRIPTIONS.get(key) + ": " + value);
+            }
+        }
+
+        return foundDescriptions;
     }
 
     private int checkDeceptiveUrl(URL url) {
@@ -104,10 +178,24 @@ public class URLVerificationService {
         for (Pattern pattern : maliciousPatterns) {
             Matcher matcher = pattern.matcher(url);
             if (matcher.find()) {
-                return "Javascript found in URL!";
+                return "Javascript found in URL.";
             }
         }
-        return "No Javascript in URL";
+        return "";
+    }
+
+    // Function to detect if the URL uses a shortening service
+    private String hasShorteningService(String url) {
+        Pattern pattern = Pattern.compile(SHORTENING_PATTERN, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(url);
+        return matcher.find() ? "Yes" : "";
+    }
+
+    // Function to detect if the URL has an IP address
+    private static String hasIPAddress(String url) {
+        Pattern pattern = Pattern.compile(IP_PATTERN, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(url);
+        return matcher.find() ? "URL contains IP address." : "";
     }
     private String parseQueryParams(String query) {
         if (query == null) return "{}";
@@ -220,7 +308,7 @@ public class URLVerificationService {
             logger.error("Error in breaking down URL: {}", e.getMessage());
         } catch (SSLHandshakeException e) {
             logger.error("SSL Handshake Exception: {}", e.getMessage());
-            details.setCertificateSubjectMismatch("SSL Handshake Exception: " + e.getMessage());
+            details.setSslError("SSL Handshake Exception: " + e.getMessage());
         } catch (SocketTimeoutException e) {
             logger.error("Connection timed out: {}", e.getMessage());
             details.setDnsError("Connection timed out: " + e.getMessage());
@@ -228,11 +316,11 @@ public class URLVerificationService {
             logger.error("Unknown Host Exception: {}", e.getMessage());
             details.setDnsError("Unknown Host Exception: " + e.getMessage());
         } catch (NoRouteToHostException e) {
-            details.setDnsError("Error: No route to host: " + e.getMessage());
+            details.setDnsError("Error: " + e.getMessage());
         } catch (ConnectException e) {
-            details.setDnsError("Error: Connection refused: " + e.getMessage());
+            details.setDnsError("Connection Error: " + e.getMessage());
         } catch (SocketException e) {
-            details.setDnsError("Error: Network is unreachable or other socket error: " + e.getMessage());
+            details.setDnsError("Socket Error: " + e.getMessage());
         } catch (Exception e) {
             details.setDnsError("Exception: " + e.getMessage());
         }
