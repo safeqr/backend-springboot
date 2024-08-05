@@ -58,4 +58,10 @@ public class URLEntity {
     @Type(ListArrayType.class)
     @Column(name = "redirect_chain", columnDefinition = "text[]")
     private List<String> redirectChain;
+
+    @Column(name = "dns_error")
+    private String dnsError;
+
+    @Column(name="certificate_subject_mismatch")
+    private String certificateSubjectMismatch;
 }

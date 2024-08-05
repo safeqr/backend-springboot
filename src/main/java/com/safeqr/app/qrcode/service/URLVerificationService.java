@@ -2,7 +2,6 @@ package com.safeqr.app.qrcode.service;
 
 import static com.safeqr.app.constants.CommonConstants.*;
 
-import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.entity.URLEntity;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +21,8 @@ import java.util.*;
 
 @Service
 public class URLVerificationService {
+    private static final int CONNECTION_TIMEOUT_MS = 10000;
+    private static final int READ_TIMEOUT_MS = 10000;
     private static final Logger logger = LoggerFactory.getLogger(URLVerificationService.class);
     private final URLRepository urlRepository;
     @Autowired
@@ -144,6 +146,8 @@ public class URLVerificationService {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(CONNECTION_TIMEOUT_MS);
+                connection.setReadTimeout(READ_TIMEOUT_MS);
 
                 int responseCode = connection.getResponseCode();
                 redirected = (responseCode >= 300 && responseCode < 400);
@@ -182,6 +186,23 @@ public class URLVerificationService {
             details.setHstsHeader(hstsHeaderList);
         } catch (URISyntaxException e){
             logger.error("Error in breaking down URL: {}", e.getMessage());
+        } catch (SSLHandshakeException e) {
+            logger.error("SSL Handshake Exception: {}", e.getMessage());
+            details.setCertificateSubjectMismatch("SSL Handshake Exception: " + e.getMessage());
+        } catch (SocketTimeoutException e) {
+            logger.error("Connection timed out: {}", e.getMessage());
+            details.setDnsError("Connection timed out: " + e.getMessage());
+        } catch (UnknownHostException e) {
+            logger.error("Unknown Host Exception: {}", e.getMessage());
+            details.setDnsError("Unknown Host Exception: " + e.getMessage());
+        } catch (NoRouteToHostException e) {
+            details.setDnsError("Error: No route to host: " + e.getMessage());
+        } catch (ConnectException e) {
+            details.setDnsError("Error: Connection refused: " + e.getMessage());
+        } catch (SocketException e) {
+            details.setDnsError("Error: Network is unreachable or other socket error: " + e.getMessage());
+        } catch (Exception e) {
+            details.setDnsError("Exception: " + e.getMessage());
         }
     }
     // Function to check if the redirect is from HTTPS to HTTP
