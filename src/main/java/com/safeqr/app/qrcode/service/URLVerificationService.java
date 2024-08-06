@@ -71,7 +71,8 @@ public class URLVerificationService {
     public URLEntity breakdownURL(String urlString) {
         URLEntity urlObj = new URLEntity();
         try {
-            URL url = new URI(encodeUrl(urlString)).toURL();
+            //URL url = new URI(encodeUrl(urlString)).toURL();
+            URL url = new URI(urlString).toURL();
             String host = url.getHost();
 
             // Check for deceptive URL
@@ -88,15 +89,22 @@ public class URLVerificationService {
 
             populateHostDetails(host, urlObj);
 
-            urlObj.setPath(Optional.ofNullable(url.getPath()).filter(p -> !p.isEmpty()).orElse("/"));
-            urlObj.setQuery(parseQueryParams(url.getQuery()));
+            urlObj.setPath(Optional.ofNullable(url.getPath()).filter(p -> !p.isEmpty()).orElse(""));
+
+            String query = parseQueryParams(url.getQuery());
+            urlObj.setQuery(query);
             urlObj.setFragment(Optional.ofNullable(url.getRef()).orElse(""));
 
             // Check for tracking parameters
             urlObj.setTrackingDescriptions(getTrackingDescriptions(url.getQuery()));
 
-            // Check for URL encoding
-            urlObj.setUrlEncoding(checkURLEncoding(url.getPath()));
+            // Check for URL encoding in path and query
+            String pathEncoding = checkURLEncoding(url.getPath());
+            String queryEncoding = query != null ? checkURLEncoding(query) : "";
+
+            // Combine encoding results
+            urlObj.setUrlEncoding(pathEncoding.equals("Yes") || queryEncoding.equals("Yes") ? "Yes" : "");
+
         } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
         }
@@ -171,6 +179,9 @@ public class URLVerificationService {
     }
 
     private String checkForJavascriptCode(String url) {
+        // Decode the URL
+        String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8);
+
         // Patterns to detect 'javascript:', '<script>', and 'on*=' attributes
         List<Pattern> maliciousPatterns = Arrays.asList(
                 Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE),
@@ -180,7 +191,7 @@ public class URLVerificationService {
 
         // Check for any malicious pattern in the URL
         for (Pattern pattern : maliciousPatterns) {
-            Matcher matcher = pattern.matcher(url);
+            Matcher matcher = pattern.matcher(decodedUrl);
             if (matcher.find()) {
                 return "Javascript found in URL.";
             }
@@ -196,9 +207,9 @@ public class URLVerificationService {
     }
 
     // Function to check text encoding in a URL
-    private static String checkURLEncoding(String pathTextPart) throws UnsupportedEncodingException {
+    private static String checkURLEncoding(String pathTextPart) {
         // Decode the text
-        String decodedText = URLDecoder.decode(pathTextPart, StandardCharsets.UTF_8.name());
+        String decodedText = URLDecoder.decode(pathTextPart, StandardCharsets.UTF_8);
 
         // Check if the decoded text matches the original text
         return decodedText.equals(pathTextPart) ? "" : "Yes";
