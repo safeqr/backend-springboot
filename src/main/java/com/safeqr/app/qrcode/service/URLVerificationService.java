@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -93,6 +94,9 @@ public class URLVerificationService {
 
             // Check for tracking parameters
             urlObj.setTrackingDescriptions(getTrackingDescriptions(url.getQuery()));
+
+            // Check for URL encoding
+            urlObj.setUrlEncoding(checkURLEncoding(url.getPath()));
         } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
         }
@@ -171,7 +175,7 @@ public class URLVerificationService {
         List<Pattern> maliciousPatterns = Arrays.asList(
                 Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE),
                 Pattern.compile("<\\s*script", Pattern.CASE_INSENSITIVE),
-                Pattern.compile("on\\w*\\s*=", Pattern.CASE_INSENSITIVE)
+                Pattern.compile("on(click|mouseover|load|error|unload|submit|reset|focus|blur|change|select|keydown|keyup|keypress|mousedown|mousemove|mouseup|mouseenter|mouseleave|contextmenu|dblclick)\\s*=", Pattern.CASE_INSENSITIVE)
         );
 
         // Check for any malicious pattern in the URL
@@ -189,6 +193,15 @@ public class URLVerificationService {
         Pattern pattern = Pattern.compile(SHORTENING_PATTERN, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(url);
         return matcher.find() ? "Yes" : "";
+    }
+
+    // Function to check text encoding in a URL
+    private static String checkURLEncoding(String pathTextPart) throws UnsupportedEncodingException {
+        // Decode the text
+        String decodedText = URLDecoder.decode(pathTextPart, StandardCharsets.UTF_8.name());
+
+        // Check if the decoded text matches the original text
+        return decodedText.equals(pathTextPart) ? "" : "Yes";
     }
 
     // Function to detect if the URL has an IP address

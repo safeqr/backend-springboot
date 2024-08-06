@@ -76,6 +76,9 @@ public class URLEntity {
     @Column(name = "tracking_descriptions", columnDefinition = "text[]")
     private List<String> trackingDescriptions = new ArrayList<>();
 
+    @Column(name = "url_encoding")
+    private String urlEncoding = "";
+
     @Column(name = "dns_error")
     private String dnsError = "";
 
