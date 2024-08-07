@@ -17,4 +17,9 @@ public class CommonConstants {
     public static final String INFO_NO_HSTS_HEADER = "No HSTS Header detected";
     public static final String INFO_HSTS_HEADER_PREFIX = "HSTS Header: ";
     public static final String INFO_HSTS_NOT_APPLICABLE = "N/A";
+
+    public static final String CLASSIFY_SAFE = "SAFE";
+    public static final String CLASSIFY_WARNING = "WARNING";
+    public static final String CLASSIFY_UNSAFE = "UNSAFE";
+    public static final String CLASSIFY_UNKNOWN = "UNKNOWN";
 }

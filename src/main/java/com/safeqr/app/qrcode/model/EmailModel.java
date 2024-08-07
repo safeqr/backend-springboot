@@ -35,4 +35,8 @@ public final class EmailModel extends QRCodeModel<EmailEntity> {
     public EmailEntity getDetails () {
         return emailVerificationService.getEmailEntityByQRCodeId(data.getId());
     }
+    @Override
+    public String retrieveClassification() {
+        return "";
+    }
 }

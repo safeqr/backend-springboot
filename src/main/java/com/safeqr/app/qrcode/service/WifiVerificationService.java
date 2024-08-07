@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static com.safeqr.app.constants.CommonConstants.*;
+
 @Service
 public class WifiVerificationService {
     private final WifiRepository wifiRepository;
@@ -28,4 +30,46 @@ public class WifiVerificationService {
         wifiRepository.save(wifiEntity);
     }
 
+    public void parseWifiString(WifiEntity wifiEntity, String wifiString) {
+        wifiString = wifiString.substring(5);
+        // Split the string by semicolons
+        String[] parts = wifiString.split(";");
+
+        for (String part : parts) {
+            if (part.startsWith("T:")) {
+                wifiEntity.setEncryption(part.substring(2));
+            } else if (part.startsWith("S:")) {
+                wifiEntity.setSsid(part.substring(2));
+            } else if (part.startsWith("P:")) {
+                wifiEntity.setPassword(part.substring(2));
+            } else if (part.startsWith("H:")) {
+                wifiEntity.setHidden(Boolean.parseBoolean(part.substring(2)));
+            }
+        }
+
+        // Unescape special characters in SSID and password
+        wifiEntity.setSsid(unescapeString(wifiEntity.getSsid()));
+        wifiEntity.setPassword(unescapeString(wifiEntity.getPassword()));
+    }
+
+    private String unescapeString(String input) {
+        return input.replace("\\:", ":")
+                .replace("\\;", ";")
+                .replace("\\,", ",")
+                .replace("\\\\", "\\");
+    }
+
+    public String getClassification(String encryptionType) {
+        if (encryptionType.equalsIgnoreCase("WPA") ||
+                encryptionType.equalsIgnoreCase("WPA2") ||
+                encryptionType.equalsIgnoreCase("WPA3")) {
+            return CLASSIFY_SAFE;
+        } else if (encryptionType.equalsIgnoreCase("WEP")) {
+            return CLASSIFY_WARNING;
+        } else if (encryptionType.equalsIgnoreCase("nopass")) {
+            return CLASSIFY_UNSAFE;
+        } else {
+            return CLASSIFY_UNKNOWN;
+        }
+    }
 }

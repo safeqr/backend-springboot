@@ -12,6 +12,8 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static com.safeqr.app.constants.CommonConstants.CLASSIFY_UNKNOWN;
+
 @Entity
 @Table(name = "qr_code", schema = "safeqr")
 @Data
@@ -36,4 +38,7 @@ public class QRCodeEntity {
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "result_category")
+    private String result = CLASSIFY_UNKNOWN;
 }

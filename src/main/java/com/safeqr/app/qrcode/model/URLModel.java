@@ -44,4 +44,9 @@ public final class URLModel extends QRCodeModel<URLEntity> {
     public URLEntity getDetails () {
         return urlVerificationService.getURLEntityByQRCodeId(data.getId());
     }
+
+    @Override
+    public String retrieveClassification() {
+        return "";
+    }
 }

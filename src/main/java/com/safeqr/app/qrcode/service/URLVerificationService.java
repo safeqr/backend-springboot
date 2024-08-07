@@ -72,7 +72,17 @@ public class URLVerificationService {
         URLEntity urlObj = new URLEntity();
         try {
             //URL url = new URI(encodeUrl(urlString)).toURL();
-            URL url = new URI(urlString).toURL();
+            URL url = new URI(urlString.replace(" ", "")).toURL();
+            // Check for URL encoding in path and query
+            String query = parseQueryParams(url.getQuery());
+            String pathEncoding = checkURLEncoding(url.getPath());
+            String queryEncoding = query != null ? checkURLEncoding(query) : "";
+
+            // Combine encoding results
+            urlObj.setUrlEncoding(pathEncoding.equals("Yes") || queryEncoding.equals("Yes") ? "Yes" : "");
+
+            // encode url before proceeding the rest of the checks
+            url = new URI(encodeUrl(urlString)).toURL();
             String host = url.getHost();
 
             // Check for deceptive URL
@@ -91,19 +101,11 @@ public class URLVerificationService {
 
             urlObj.setPath(Optional.ofNullable(url.getPath()).filter(p -> !p.isEmpty()).orElse(""));
 
-            String query = parseQueryParams(url.getQuery());
-            urlObj.setQuery(query);
+            urlObj.setQuery(parseQueryParams(url.getQuery()));
             urlObj.setFragment(Optional.ofNullable(url.getRef()).orElse(""));
 
             // Check for tracking parameters
             urlObj.setTrackingDescriptions(getTrackingDescriptions(url.getQuery()));
-
-            // Check for URL encoding in path and query
-            String pathEncoding = checkURLEncoding(url.getPath());
-            String queryEncoding = query != null ? checkURLEncoding(query) : "";
-
-            // Combine encoding results
-            urlObj.setUrlEncoding(pathEncoding.equals("Yes") || queryEncoding.equals("Yes") ? "Yes" : "");
 
         } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
@@ -266,7 +268,7 @@ public class URLVerificationService {
 
     public void countAndTrackRedirects(String urlString, URLEntity details) throws IOException {
         try {
-            URI uri = new URI(urlString);
+            URI uri = new URI(encodeUrl(urlString));
             URL url = uri.toURL();
             List<String> redirectChain = new ArrayList<>();
             List<String> hstsHeaderList = new ArrayList<>();

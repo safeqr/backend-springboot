@@ -26,11 +26,20 @@ public final class WifiModel extends QRCodeModel<WifiEntity> {
     @Override
     public void setDetails() {
         details = WifiEntity.builder().qrCodeId(data.getId()).build();
+
+        // Parse wifi string
+        wifiVerificationService.parseWifiString(details, data.getContents());
+
         // Insert into wifi table
         wifiVerificationService.insertDB(details);
     }
     @Override
     public WifiEntity getDetails () {
         return wifiVerificationService.getWifiEntityByQRCodeId(data.getId());
+    }
+
+    @Override
+    public String retrieveClassification() {
+        return wifiVerificationService.getClassification(details.getEncryption());
     }
 }

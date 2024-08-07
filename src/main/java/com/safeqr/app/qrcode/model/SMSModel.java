@@ -34,4 +34,8 @@ public final class SMSModel extends QRCodeModel<SMSEntity> {
     public SMSEntity getDetails () {
         return smsVerificationService.getSMSEntityByQRCodeId(data.getId());
     }
+    @Override
+    public String retrieveClassification() {
+        return "";
+    }
 }

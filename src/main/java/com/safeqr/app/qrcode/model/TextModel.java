@@ -34,4 +34,9 @@ public final class TextModel extends QRCodeModel<TextEntity> {
     public TextEntity getDetails () {
         return textVerificationService.getTextEntityByQRCodeId(data.getId());
     }
+
+    @Override
+    public String retrieveClassification() {
+        return "";
+    }
 }

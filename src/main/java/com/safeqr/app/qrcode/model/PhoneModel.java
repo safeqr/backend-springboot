@@ -34,4 +34,8 @@ public final class PhoneModel extends QRCodeModel<PhoneEntity> {
     public PhoneEntity getDetails () {
         return phoneVerificationService.getPhoneEntityByQRCodeId(data.getId());
     }
+    @Override
+    public String retrieveClassification() {
+        return "";
+    }
 }

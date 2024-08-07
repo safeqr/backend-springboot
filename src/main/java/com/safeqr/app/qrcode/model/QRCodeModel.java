@@ -10,4 +10,5 @@ public abstract class QRCodeModel<T>{
 
     public abstract void setDetails();
     public abstract T getDetails();
+    public abstract String retrieveClassification();
 }
