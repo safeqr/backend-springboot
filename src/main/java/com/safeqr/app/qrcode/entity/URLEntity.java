@@ -90,6 +90,10 @@ public class URLEntity {
     private String urlEncoding = "";
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Column(name="has_executable")
+    private String hasExecutable = "";
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Column(name = "dns_error")
     private String dnsError = "";
 
@@ -105,13 +109,13 @@ public class URLEntity {
     // Custom getter for path
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getPath() {
-        return path.isEmpty() ? null : path;
+        return path == null || path.isEmpty() ? null : path;
     }
 
     // Custom getter for query
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty
     public String getQuery() {
-        return query.equals("{}") ? null : query;
+        return query == null || query.equals("{}") ? null : query;
     }
 }
