@@ -90,6 +90,10 @@ public class URLEntity {
     private String urlEncoding = "";
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Column(name="has_executable")
+    private String hasExecutable = "";
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Column(name = "dns_error")
     private String dnsError = "";
 

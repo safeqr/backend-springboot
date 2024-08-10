@@ -14,13 +14,13 @@ import org.springframework.stereotype.Service;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Service
@@ -56,6 +56,29 @@ public class URLVerificationService {
                     "([0-9]+(?:\\.[0-9]+){3}:[0-9]+)|" +
                     "((?:(?:\\d|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d|\\d)(?:\\/\\d{1,2})?)";
 
+    // Define a Set of suspicious file extensions
+    private static final Set<String> SUSPICIOUS_EXTENSIONS = Stream.of(
+            ".exe", ".bat", ".sh", ".cmd", ".scr", ".pif", ".application", ".gadget",
+            ".vb", ".vbs", ".js", ".jse", ".ws", ".wsf", ".msc", ".com", ".cpl",
+            ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".app", ".bin", ".run"
+    ).collect(Collectors.toUnmodifiableSet());
+
+    // Checks if the URL has executable file
+    public String hasExecutableFile(String urlPath) {
+        return Stream.of(urlPath)
+                .map(String::toLowerCase)
+                .map(path -> {
+                    int lastDotIndex = path.lastIndexOf('.');
+                    if (lastDotIndex != -1) {
+                        return path.substring(lastDotIndex);
+                    }
+                    return path.contains(".") || path.endsWith("/") ? null : "";
+                })
+                .filter(Objects::nonNull)
+                .map(extension -> SUSPICIOUS_EXTENSIONS.contains(extension) || extension.isEmpty() ? "Yes" : "")
+                .findFirst()
+                .orElse("");
+    }
 
     public URLEntity getURLEntityByQRCodeId(UUID qrCodeId) {
         logger.info("qrCodeId retrieving: {}", qrCodeId);
@@ -84,6 +107,7 @@ public class URLVerificationService {
             // encode url before proceeding the rest of the checks
             url = new URI(encodeUrl(urlString)).toURL();
             String host = url.getHost();
+            populateHostDetails(host, urlObj);
 
             // Check for deceptive URL
             urlObj.setHostnameEmbedding(checkDeceptiveUrl(url));
@@ -97,7 +121,8 @@ public class URLVerificationService {
             // Check for IP address
             urlObj.setHasIpAddress(hasIPAddress(urlString));
 
-            populateHostDetails(host, urlObj);
+            // Check for suspicious file extensions
+            urlObj.setHasExecutable(hasExecutableFile(urlString));
 
             urlObj.setPath(Optional.ofNullable(url.getPath()).filter(p -> !p.isEmpty()).orElse(""));
 
@@ -109,18 +134,37 @@ public class URLVerificationService {
 
         } catch (Exception e) {
             logger.error("Error in breaking down URL: {}", e.getMessage());
+            e.printStackTrace();
         }
         return urlObj;
     }
 
     private void populateHostDetails(String host, URLEntity urlObj) {
-        String[] hostParts = host.split("\\.");
-        int length = hostParts.length;
+        logger.info("Host: {}", host);
 
-        if (length >= 2) {
-            urlObj.setTopLevelDomain(hostParts[length - 1]);
-            urlObj.setDomain(hostParts[length - 2]);
-            urlObj.setSubdomain(length > 2 ? String.join(".", Arrays.copyOfRange(hostParts, 0, length - 2)) : "");
+        if (host != null && !host.isEmpty()) {
+            if (isIpAddress(host)) {
+                // Handle IP address
+                urlObj.setDomain(host);
+                urlObj.setTopLevelDomain("");  // No TLD for IP addresses
+                urlObj.setSubdomain("");       // No subdomain for IP addresses
+            } else {
+                // Handle regular domain name
+                String[] hostParts = host.split("\\.");
+
+                int length = hostParts.length;
+
+                if (length >= 2) {
+                    urlObj.setTopLevelDomain(hostParts[length - 1]); // TLD, e.g., "com"
+                    urlObj.setDomain(hostParts[length - 2]);         // Domain, e.g., "example"
+                    urlObj.setSubdomain(length > 2 ? String.join(".", Arrays.copyOfRange(hostParts, 0, length - 2)) : "");
+                } else if (length == 1) {
+                    // Handle cases like 'localhost' where there's no TLD
+                    urlObj.setDomain(hostParts[0]);
+                    urlObj.setTopLevelDomain("");  // No TLD
+                    urlObj.setSubdomain("");       // No subdomain
+                }
+            }
         }
     }
     // List of common tracking parameters with their descriptions
@@ -223,16 +267,26 @@ public class URLVerificationService {
         Matcher matcher = pattern.matcher(url);
         return matcher.find() ? "URL contains IP address." : "";
     }
+    // Check if the host is an IP address
+    private boolean isIpAddress(String host) {
+        // Regex to match IPv4 addresses
+        String ipv4Pattern = "\\d+\\.\\d+\\.\\d+\\.\\d+";
+        // Regex to match IPv6 addresses
+        String ipv6Pattern = "([a-fA-F0-9:]+:+)+[a-fA-F0-9]+";
+
+        return host.matches(ipv4Pattern) || host.matches(ipv6Pattern);
+    }
     private String parseQueryParams(String query) {
-        if (query == null) return "{}";
-
-        Map<String, String> queryParams = Arrays.stream(query.split("&"))
-                .map(param -> param.split("="))
-                .collect(Collectors.toMap(
-                        pair -> pair[0],
-                        pair -> pair.length > 1 ? pair[1] : "",
-                        (oldValue, newValue) -> oldValue, HashMap::new));
-
+        if (query == null || query.isEmpty()) return "{}";
+        Map<String, String> queryParams = new HashMap<>();
+        for (String param : query.split("&")) {
+            String[] pair = param.split("=", 2);
+            String key = pair[0];
+            String value = pair.length > 1 ? pair[1] : "";
+            if (!key.isEmpty()) {
+                queryParams.put(key, value);
+            }
+        }
         return queryParams.toString();
     }
 
