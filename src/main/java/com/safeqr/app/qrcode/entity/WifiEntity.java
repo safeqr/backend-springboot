@@ -2,6 +2,7 @@ package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class WifiEntity {
 
     private String ssid;
     private String password;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String encryption;
     private boolean hidden;
 }

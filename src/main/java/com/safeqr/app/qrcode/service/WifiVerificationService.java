@@ -60,6 +60,11 @@ public class WifiVerificationService {
     }
 
     public String getClassification(String encryptionType) {
+        // Check if encryptionType is null
+        if (encryptionType == null) {
+            return CLASSIFY_UNSAFE;
+        }
+
         if (encryptionType.equalsIgnoreCase("WPA") ||
                 encryptionType.equalsIgnoreCase("WPA2") ||
                 encryptionType.equalsIgnoreCase("WPA3")) {
