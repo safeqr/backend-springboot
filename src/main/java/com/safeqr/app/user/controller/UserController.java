@@ -37,49 +37,49 @@ public class UserController {
 
     @GetMapping(value = API_URL_USER_GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> getUser(@RequestHeader(name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking GET User endpoint");
+        logger.info("User Id Invoking GET User endpoint: {}", userId);
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
     @GetMapping(value = API_URL_USER_GET_SCANNED_HISTORIES, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ScannedHistoriesDto>> getUserScannedHistories(@RequestHeader(name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking GET User Scanned Histories endpoint");
+        logger.info("User Id Invoking GET User Scanned Histories endpoint: {}", userId);
         return ResponseEntity.ok(userService.getUserScannedHistories(userId));
     }
 
     @PutMapping(value = API_URL_USER_DELETE_SCANNED_HISTORIES, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseResponse> deleteScannedHistory(@RequestHeader(name = HEADER_USER_ID) String userId, @RequestBody BookmarkRequestDto bookmarkRequestDto) {
-        logger.info("Invoking PUT Delete Single Scanned History endpoint");
+        logger.info("User Id Invoking PUT Delete Single Scanned History endpoint: {}", userId);
         return ResponseEntity.ok(userService.deleteScannedHistory(userId, bookmarkRequestDto.getQrCodeId()));
     }
 
     @PutMapping(value = API_URL_USER_DELETE_ALL_SCANNED_HISTORIES, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseResponse> deleteAllScannedHistories(@RequestHeader(name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking PUT Delete All Scanned Histories endpoint");
+        logger.info("User Id Invoking PUT Delete All Scanned Histories endpoint: {}", userId);
         return ResponseEntity.ok(userService.deleteAllScannedHistoriesByUserId(userId));
     }
 
     @GetMapping(value = API_URL_USER_GET_BOOKMARKS, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ScannedHistoriesDto>> getUserBookmarks(@RequestHeader(name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking GET User bookmarks endpoint");
+        logger.info("User Id Invoking GET User bookmarks endpoint: {}", userId);
         return ResponseEntity.ok(userService.getUserBookmarks(userId));
     }
 
     @PostMapping(value = API_URL_USER_SET_BOOKMARK, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseResponse> setBookmark(@RequestHeader(name = HEADER_USER_ID) String userId, @RequestBody BookmarkRequestDto bookmarkRequestDto) {
-        logger.info("Invoking POST User bookmark endpoint");
+        logger.info("User Id Invoking POST User bookmark endpoint: {}", userId);
         return ResponseEntity.ok(userService.setBookmark(userId, bookmarkRequestDto.getQrCodeId()));
     }
 
     @PutMapping(value = API_URL_USER_DELETE_BOOKMARK, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseResponse> deleteBookmark(@RequestHeader(name = HEADER_USER_ID) String userId, @RequestBody BookmarkRequestDto bookmarkRequestDto) {
-        logger.info("Invoking PUT Delete Single Bookmark endpoint");
+        logger.info("User Id Invoking PUT Delete Single Bookmark endpoint: {}", userId);
         return ResponseEntity.ok(userService.deleteBookmark(userId, bookmarkRequestDto.getQrCodeId()));
     }
 
     @PutMapping(value = API_URL_USER_DELETE_ALL_BOOKMARK, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseResponse> deleteAllBookmark(@RequestHeader(name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking PUT Delete All Bookmark endpoint");
+        logger.info("User Id Invoking PUT Delete All Bookmark endpoint: {}", userId);
         return ResponseEntity.ok(userService.deleteAllBookmarkByUserId(userId));
     }
 }

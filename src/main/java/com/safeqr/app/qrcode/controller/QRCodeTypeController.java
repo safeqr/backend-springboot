@@ -52,7 +52,7 @@ public class QRCodeTypeController {
     @PostMapping(value = API_URL_QRCODE_SCAN, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseScanResponse> scanQRCode(@RequestBody QRCodePayload payload,
                                                        @RequestHeader(required = false, name = HEADER_USER_ID) String userId) {
-        logger.info("Invoking scan endpoint");
+        logger.info("User Id Invoking scan endpoint: {}", userId);
         return ResponseEntity.ok(qrCodeTypeService.scanQRCode(userId, payload));
     }
 

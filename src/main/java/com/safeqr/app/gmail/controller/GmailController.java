@@ -104,7 +104,7 @@ public class GmailController {
 
     @GetMapping(value = API_URL_GMAIL_GET_SCANNED_EMAILS, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ScannedGmailResponseDto> getUserScannedEmails(@RequestHeader(name = "X-USER-ID") String userId) {
-        logger.info("Invoking GET User scanned Emails endpoint");
+        logger.info("User Id Invoking GET User scanned Emails endpoint: {}", userId);
         return ResponseEntity.ok(gmailService.fetchScannedGmail(userId));
     }
     @GetMapping(value = API_URL_GMAIL_GET_EMAILS, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -112,7 +112,7 @@ public class GmailController {
                                            @RequestHeader(name = "refreshToken") String refreshToken,
                                            @RequestHeader(name = "X-USER-ID") String userId
                                            )  {
-        logger.info("Invoking GET Scan User Emails endpoints");
+        logger.info("User Id Invoking GET Scan User Emails endpoints: {}", userId);
         if (accessToken == null || accessToken.isEmpty()) {
             return new ResponseEntity<>("Access token is missing", HttpStatus.BAD_REQUEST);
         }
