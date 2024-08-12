@@ -4,7 +4,7 @@ import static com.safeqr.app.constants.CommonConstants.*;
 import com.safeqr.app.qrcode.entity.URLEntity;
 import com.safeqr.app.qrcode.model.URLModel;
 import com.safeqr.app.qrcode.repository.URLRepository;
-import com.safeqr.app.spark.service.MLModelService;
+import com.safeqr.app.prediction.service.PredictionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +28,11 @@ public class URLVerificationService {
     private static final int READ_TIMEOUT_MS = 10000;
     private static final Logger logger = LoggerFactory.getLogger(URLVerificationService.class);
     private final URLRepository urlRepository;
-    private final MLModelService mlModelService;
+    private final PredictionService predictionService;
     @Autowired
-    public URLVerificationService(URLRepository urlRepository, MLModelService mlModelService) {
+    public URLVerificationService(URLRepository urlRepository, PredictionService predictionService) {
         this.urlRepository = urlRepository;
-        this.mlModelService =  mlModelService;
+        this.predictionService = predictionService;
     }
 
     // Regular expression pattern for shortening services
@@ -428,6 +428,6 @@ public class URLVerificationService {
 
     // Get Classification using ML Model
     public String getClassification(URLModel urlModel){
-        return mlModelService.predict(urlModel);
+        return predictionService.predict(urlModel);
     }
 }
