@@ -1,11 +1,10 @@
 package com.safeqr.app.qrcode.service;
 
 import static com.safeqr.app.constants.CommonConstants.*;
-
-import com.safeqr.app.qrcode.dto.request.QRCodePayload;
-import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.entity.URLEntity;
+import com.safeqr.app.qrcode.model.URLModel;
 import com.safeqr.app.qrcode.repository.URLRepository;
+import com.safeqr.app.prediction.service.PredictionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +28,11 @@ public class URLVerificationService {
     private static final int READ_TIMEOUT_MS = 10000;
     private static final Logger logger = LoggerFactory.getLogger(URLVerificationService.class);
     private final URLRepository urlRepository;
+    private final PredictionService predictionService;
     @Autowired
-    public URLVerificationService(URLRepository urlRepository) {
+    public URLVerificationService(URLRepository urlRepository, PredictionService predictionService) {
         this.urlRepository = urlRepository;
+        this.predictionService = predictionService;
     }
 
     // Regular expression pattern for shortening services
@@ -425,22 +426,8 @@ public class URLVerificationService {
         return INFO_NON_SECURE_CONNECTION;
     }
 
-    public URLVerificationResponse verifyURL(QRCodePayload payload) {
-        URLVerificationResponse response = new URLVerificationResponse();
-        try {
-            java.net.URL url = new java.net.URL(payload.getData());
-            String protocol = url.getProtocol();
-            if ("https".equalsIgnoreCase(protocol)) {
-                response.setSecure(true);
-                response.setMessage("The connection is secure.");
-            } else {
-                response.setSecure(false);
-                response.setMessage("The connection is not secure.");
-            }
-        } catch (Exception e) {
-            response.setSecure(false);
-            response.setMessage("Invalid URL.");
-        }
-        return response;
+    // Get Classification using ML Model
+    public String getClassification(URLModel urlModel){
+        return predictionService.predict(urlModel);
     }
 }

@@ -61,10 +61,12 @@ public class QRCodeTypeController {
         return ResponseEntity.ok(qrCodeTypeService.detectType(payload).block());
     }
 
-    @PostMapping(API_URL_QRCODE_VERIFY_URL)
-    public ResponseEntity<URLVerificationResponse> verifyURL(@RequestBody QRCodePayload payload) {
-        URLVerificationResponse response = urlVerificationService.verifyURL(payload);
-        return ResponseEntity.ok(response);
+    @PostMapping(value = API_URL_QRCODE_VERIFY_URL, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BaseScanResponse> verifyURL(@RequestBody QRCodePayload payload,
+                                                      @RequestHeader(required = false, name = HEADER_USER_ID) String userId) {
+        logger.info("User Id Invoking verify url endpoint: {}", userId);
+        return ResponseEntity.ok(qrCodeTypeService.scanQRCode(userId, payload));
+
     }
 
     @PostMapping(API_URL_QRCODE_VIRUS_TOTAL_CHECK)

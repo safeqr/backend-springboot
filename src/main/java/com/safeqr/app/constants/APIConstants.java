@@ -13,6 +13,7 @@ public class APIConstants {
     public static final String API_URL_QRCODE_VIRUS_TOTAL_CHECK = "/qrcodetypes/virusTotalCheck";
     public static final String API_URL_QRCODE_REDIRECT_COUNT = "/qrcodetypes/checkRedirects";
     public static final String API_URL_QRCODE_GET_QR_DETAILS = "/qrcodetypes/getQRDetails";
+    public static final String PREDICTION_API_URL = "http://localhost:8000/predict";
 
 
     public static final String API_URL_USER_GET = "/user/getUser";
