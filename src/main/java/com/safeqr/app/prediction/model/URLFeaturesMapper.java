@@ -1,18 +1,22 @@
 package com.safeqr.app.prediction.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
+import com.safeqr.app.qrcode.entity.URLEntity;
 import com.safeqr.app.qrcode.model.URLModel;
 import lombok.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class URLFeatures {
+public class URLFeaturesMapper {
+    private static final Logger logger = LoggerFactory.getLogger(URLFeaturesMapper.class);
+
     @JsonProperty("domain")
     private Integer domain;
 
@@ -70,27 +74,29 @@ public class URLFeatures {
     @JsonProperty("contents")
     private Integer contents;
 
-    public static URLFeatures fromEntity(URLModel urlModel) {
-        URLFeatures features = URLFeatures.builder()
+    public static URLFeaturesMapper fromEntity(URLModel urlModel) {
+        URLEntity details = urlModel.getDetails();
+        QRCodeTypeEntity qrCodeTypeEntity = urlModel.getData().getInfo();
+        URLFeaturesMapper features = URLFeaturesMapper.builder()
                 .build();
-        features.setDomain(urlModel.getDetails().getDomain());
-        features.setSubdomain(urlModel.getDetails().getSubdomain());
-        features.setTopLevelDomain(urlModel.getDetails().getTopLevelDomain());
-        features.setQuery(urlModel.getDetails().getQuery());
-        features.setFragment(urlModel.getDetails().getFragment());
-        features.setPath(urlModel.getDetails().getPath());
-        features.setRedirect(urlModel.getDetails().getRedirect());
-        features.setRedirectChain(urlModel.getDetails().getRedirectChain());
-        features.setHstsHeader(urlModel.getDetails().getHstsHeader());
-        features.setSslStripping(urlModel.getDetails().getSslStripping());
-        features.setHostnameEmbedding(urlModel.getDetails().getHostnameEmbedding());
-        features.setJavascriptCheck(urlModel.getDetails().getJavascriptCheck());
-        features.setShorteningService(urlModel.getDetails().getShorteningService());
-        features.setHasIpAddress(urlModel.getDetails().getHasIpAddress());
-        features.setTrackingDescriptions(urlModel.getDetails().getTrackingDescriptions());
-        features.setUrlEncoding(urlModel.getDetails().getUrlEncoding());
-        features.setHasExecutable(urlModel.getDetails().getHasExecutable());
-        features.setTls(Math.toIntExact(urlModel.getData().getInfo().getId()));
+        features.setDomain(details.getDomain());
+        features.setSubdomain(details.getSubdomain());
+        features.setTopLevelDomain(details.getTopLevelDomain());
+        features.setQuery(details.getQuery());
+        features.setFragment(details.getFragment());
+        features.setPath(details.getPath());
+        features.setRedirect(details.getRedirect());
+        features.setRedirectChain(details.getRedirectChain());
+        features.setHstsHeader(details.getHstsHeader());
+        features.setSslStripping(details.getSslStripping());
+        features.setHostnameEmbedding(details.getHostnameEmbedding());
+        features.setJavascriptCheck(details.getJavascriptCheck());
+        features.setShorteningService(details.getShorteningService());
+        features.setHasIpAddress(details.getHasIpAddress());
+        features.setTrackingDescriptions(details.getTrackingDescriptions());
+        features.setUrlEncoding(details.getUrlEncoding());
+        features.setHasExecutable(details.getHasExecutable());
+        features.setTls(Math.toIntExact(qrCodeTypeEntity.getId()));
         features.setContents(urlModel.getData().getContents());
 
         return features;
@@ -149,18 +155,16 @@ public class URLFeatures {
 
     // Custom setter for hstsHeader
     public void setHstsHeader(List<String> hstsHeader) {
+        logger.info("HSTS header value: {}", hstsHeader);
         if (hstsHeader == null || hstsHeader.isEmpty()) {
             this.hstsHeader = 0;
-        } else if (hstsHeader.get(0).startsWith("{") && hstsHeader.get(0).endsWith("}")) {
-            Pattern pattern = Pattern.compile("\"(.*?)\"");
-            Matcher matcher = pattern.matcher(hstsHeader.get(0));
-            if (matcher.find() && matcher.group(1).toLowerCase().contains("no")) {
+        }  else {
+            logger.info("first hsts header value: {}", hstsHeader.get(0));
+            if (hstsHeader.get(0).toLowerCase().contains("no")) {
                 this.hstsHeader = 0;
             } else {
                 this.hstsHeader = 1;
             }
-        } else {
-            this.hstsHeader = 1;
         }
     }
 
@@ -190,7 +194,17 @@ public class URLFeatures {
     }
 
     public void setRedirectChain(List<String> redirectChain) {
-        this.redirectChain = (redirectChain != null) ? redirectChain.size() : 0;
+        logger.info("Redirect chain: {}", redirectChain);
+        if (redirectChain != null) {
+            // Calculate the total number of characters in the list of strings
+            int totalChars;
+            totalChars = redirectChain.stream()
+                    .mapToInt(String::length)
+                    .sum();
+            this.redirectChain = totalChars;
+        } else {
+            this.redirectChain = 0;
+        }
     }
 
     public void setContents(String contents) {
