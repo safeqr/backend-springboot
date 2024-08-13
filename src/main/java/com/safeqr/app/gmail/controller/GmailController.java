@@ -1,8 +1,8 @@
 package com.safeqr.app.gmail.controller;
 
-import com.google.api.services.gmail.model.*;
+import com.safeqr.app.gmail.dto.MessageRequestDto;
 import com.safeqr.app.gmail.dto.ScannedGmailResponseDto;
-import org.apache.commons.codec.binary.Base64;
+import com.safeqr.app.gmail.dto.BaseResponse;
 import org.json.JSONObject;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.auth.oauth2.Credential;
@@ -26,11 +26,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import static com.safeqr.app.constants.APIConstants.*;
-import java.io.IOException;
-import java.lang.Thread;
+import static com.safeqr.app.constants.CommonConstants.HEADER_USER_ID;
+
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 
 @RestController
@@ -128,6 +128,18 @@ public class GmailController {
         });
 
         return new ResponseEntity<>("Scan Gmail Request is being processed", HttpStatus.ACCEPTED);
+    }
+
+    @PutMapping(value = API_URL_GMAIL_DELETE_MESSAGE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BaseResponse> deleteMessage(@RequestHeader(name = HEADER_USER_ID) String userId, @RequestBody MessageRequestDto messageRequestDto) {
+        logger.info("User Id Invoking PUT Delete Single Email endpoint: {}", userId);
+        return ResponseEntity.ok(gmailService.deleteMessage(userId, messageRequestDto.getMessageId()));
+    }
+
+    @PutMapping(value = API_URL_GMAIL_DELETE_ALL_MESSAGES, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BaseResponse> deleteAllMessages(@RequestHeader(name = HEADER_USER_ID) String userId) {
+        logger.info("User Id Invoking PUT Delete All Emails endpoint: {}", userId);
+        return ResponseEntity.ok(gmailService.deleteAllMessages(userId));
     }
 }
 

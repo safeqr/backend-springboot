@@ -23,6 +23,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class URLEntity {
+    @Column(name="classifications")
+    private String classifications;
+
     @Id
     @JsonIgnore
     @GeneratedValue(generator = "UUID")
