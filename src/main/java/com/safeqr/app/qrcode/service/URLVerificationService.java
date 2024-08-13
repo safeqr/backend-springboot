@@ -428,6 +428,19 @@ public class URLVerificationService {
 
     // Get Classification using ML Model
     public String getClassification(URLModel urlModel){
-        return predictionService.predict(urlModel);
+        // Call ML model
+        String category = predictionService.predict(urlModel);
+
+        //update in category in url table
+
+
+        // return classification results
+        if (category.equals(CAT_BENIGN)) {
+            if (!urlModel.getDetails().getTrackingDescriptions().isEmpty()) {
+                return CLASSIFY_WARNING;
+            }
+            return CLASSIFY_SAFE;
+        }
+        return CLASSIFY_UNSAFE;
     }
 }

@@ -111,7 +111,7 @@ public class QRCodeTypeService {
         // Create the QR Code Instance based on the QR Code Type & insert into the respective table
         QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(scannedQR);
         qrCodeModel.setDetails();
-        // Get classifications based on verificationsv
+        // Get classifications based on verifications
         scannedQR.setResult(qrCodeModel.retrieveClassification());
         // update result category in qrcode table
         qrCodeRepository.save(scannedQR);

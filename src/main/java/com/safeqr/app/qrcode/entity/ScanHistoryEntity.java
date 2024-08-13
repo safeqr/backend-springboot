@@ -52,4 +52,9 @@ public class ScanHistoryEntity {
         dateCreated = now;
         dateUpdated = now;
     }
+    @PreUpdate
+    public void preUpdate() {
+        dateUpdated = OffsetDateTime.now();
+    }
+
 }

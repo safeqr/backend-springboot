@@ -18,7 +18,9 @@ import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.multi.qrcode.QRCodeMultiReader;
-import com.google.zxing.qrcode.encoder.QRCode;
+
+import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
+import com.safeqr.app.gmail.dto.BaseResponse;
 import com.safeqr.app.gmail.dto.ScannedGmailResponseDto;
 import com.safeqr.app.gmail.entity.GmailCidEntity;
 import com.safeqr.app.gmail.entity.GmailEmailEntity;
@@ -43,6 +45,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -64,6 +67,7 @@ import java.util.stream.Stream;
 
 import static com.google.api.client.googleapis.auth.oauth2.GoogleOAuthConstants.TOKEN_SERVER_URL;
 import static com.safeqr.app.constants.APIConstants.APPLICATION_NAME;
+import static com.safeqr.app.constants.CommonConstants.GMAIL_ACTIVE;
 
 @Service
 public class GmailService {
@@ -263,7 +267,7 @@ public class GmailService {
     // Fetching Scanned Gmail from database
     public ScannedGmailResponseDto fetchScannedGmail(String userId){
         // Fetching all emails from gmail_email table
-        List<GmailEmailEntity> userEmailsList = gmailEmailRespository.findByUserId(userId);
+        List<GmailEmailEntity> userEmailsList = gmailEmailRespository.findByUserIdAndActive(userId, GMAIL_ACTIVE);
         List<EmailMessage> emailMessageList = new ArrayList<>();
 
         if (userEmailsList != null && !userEmailsList.isEmpty()) {
@@ -548,5 +552,22 @@ public class GmailService {
     private boolean isImageUrl(String url) {
         String lowerUrl = url.toLowerCase();
         return lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") || lowerUrl.endsWith(".png") || lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp");
+    }
+    @Transactional
+    public BaseResponse deleteMessage(String userId, String messageId) {
+        int updatedCount = gmailEmailRespository.deactivateEmailByUserIdAndMessageId(userId, messageId);
+        // throw exception if email message not found
+        if (updatedCount < 1)
+            throw new ResourceNotFoundExceptions("Email message not found");
+
+        return BaseResponse.builder().message("Email deleted successfully").build();
+    }
+
+    @Transactional
+    public BaseResponse deleteAllMessages(String userId) {
+        int updatedCount = gmailEmailRespository.deactivateEmailsByUserId(userId);
+        return (updatedCount < 1) ?
+                BaseResponse.builder().message("No Email found").build() :
+                BaseResponse.builder().message("All Emails deleted successfully").build();
     }
 }
