@@ -60,8 +60,8 @@ public class URLVerificationService {
     // Define a Set of suspicious file extensions
     private static final Set<String> SUSPICIOUS_EXTENSIONS = Stream.of(
             ".exe", ".bat", ".sh", ".cmd", ".scr", ".pif", ".application", ".gadget",
-            ".vb", ".vbs", ".js", ".jse", ".ws", ".wsf", ".msc", ".com", ".cpl",
-            ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".app", ".bin", ".run"
+            ".vb", ".vbs", ".js", ".jse", ".ws", ".wsf", ".msc", ".cpl",
+            ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".bin", ".run"
     ).collect(Collectors.toUnmodifiableSet());
 
     // Checks if the URL has executable file
