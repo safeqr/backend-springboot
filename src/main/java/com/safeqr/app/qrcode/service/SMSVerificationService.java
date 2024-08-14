@@ -31,6 +31,10 @@ public class SMSVerificationService {
     }
 
     public void parseSMSString(SMSEntity smsEntity, String smsto) throws IllegalArgumentException{
+        // Validate the string format
+        if (smsto == null || smsto.isEmpty()) {
+            throw new InvalidFormatExceptions("sms cannot be null or empty.");
+        }
         // Remove the "SMSTO:" prefix
         String data = smsto.substring(6);
 

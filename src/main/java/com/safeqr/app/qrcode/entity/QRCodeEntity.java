@@ -2,6 +2,7 @@
 package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +40,7 @@ public class QRCodeEntity {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Column(name = "result_category")
     private String result = CLASSIFY_UNKNOWN;
 }
