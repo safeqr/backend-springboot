@@ -17,12 +17,17 @@ public interface GmailEmailRespository extends JpaRepository<GmailEmailEntity, U
     // Method to update active status to 0 for a specific userId
     @Modifying
     @Transactional
-    @Query("UPDATE GmailEmailEntity e SET e.active = e.active - 1 WHERE e.userId = :userId")
+    @Query("UPDATE GmailEmailEntity e SET e.active = (SELECT MIN(e2.active) FROM GmailEmailEntity e2 WHERE e2.userId = :userId) - 1 " +
+            "WHERE e.userId = :userId " +
+            "AND e.active = 1 ")
     int deactivateEmailsByUserId(String userId);
 
     // Method to update active status to 0 for a specific userId and messageId
     @Modifying
     @Transactional
-    @Query("UPDATE GmailEmailEntity e SET e.active = e.active - 1 WHERE e.userId = :userId AND e.messageId = :messageId")
+    @Query("UPDATE GmailEmailEntity e SET e.active = e.active - 1 " +
+            "WHERE e.userId = :userId AND e.messageId = :messageId " +
+            "AND e.active = (SELECT MIN(e2.active) FROM GmailEmailEntity e2 WHERE e2.userId = :userId AND e2.messageId = :messageId)")
+
     int deactivateEmailByUserIdAndMessageId(String userId, String messageId);
 }
