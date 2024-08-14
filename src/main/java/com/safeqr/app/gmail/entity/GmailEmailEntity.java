@@ -45,7 +45,7 @@ public class GmailEmailEntity {
     private OffsetDateTime dateCreated;
 
     @Column(name = "active")
-    private Integer active = 1;
+    private int active = 1;
 
     @PrePersist
     public void prePersist() {

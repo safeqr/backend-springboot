@@ -210,6 +210,7 @@ public class GmailService {
                     .historyId(Long.valueOf(emailMessage.getHistoryId()))
                     .subject(emailMessage.getSubject())
                     .dateReceived(dateReceived)
+                    .active(emailMessage.getActive())
                     .build();
             return gmailEmailRespository.save(gmailEmailEntity);
         } catch (DataIntegrityViolationException e) {
