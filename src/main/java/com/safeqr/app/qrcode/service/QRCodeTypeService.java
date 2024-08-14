@@ -138,6 +138,9 @@ public class QRCodeTypeService {
         QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(scannedQR);
         qrCodeModel.setDetails();
 
+        // Get classifications based on verifications
+        scannedQR.setResult(qrCodeModel.retrieveClassification());
+
         return qrCodeModel;
     }
     // Returns Default type as text if it does not fit into any of the category

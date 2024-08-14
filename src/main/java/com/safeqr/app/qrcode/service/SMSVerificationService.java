@@ -1,5 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
+import com.safeqr.app.exceptions.InvalidFormatExceptions;
 import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.SMSEntity;
 import com.safeqr.app.qrcode.repository.SMSRepository;
@@ -27,6 +28,31 @@ public class SMSVerificationService {
     }
     public void insertDB(SMSEntity smsEntity) {
         smsRepository.save(smsEntity);
+    }
+
+    public void parseSMSString(SMSEntity smsEntity, String smsto) throws IllegalArgumentException{
+        // Validate the string format
+        if (smsto == null || smsto.isEmpty()) {
+            throw new InvalidFormatExceptions("sms cannot be null or empty.");
+        }
+        // Remove the "SMSTO:" prefix
+        String data = smsto.substring(6);
+
+        // Split the data into phone number and message
+        String[] parts = data.split(":", 2);
+
+        // If both phone number and message are available
+        if (parts.length == 2) {
+            String phone = parts[0];
+            String message = parts[1];
+
+            // Populate the SMSEntity object
+            smsEntity.setPhone(phone);
+            smsEntity.setMessage(message);
+        } else {
+            // Handle the case where the format is invalid
+            throw new InvalidFormatExceptions("Invalid SMSTO format. Expected format: SMSTO:<phone>:<message>");
+        }
     }
 
 }

@@ -3,11 +3,9 @@ package com.safeqr.app.qrcode.controller;
 import static com.safeqr.app.constants.APIConstants.*;
 import static com.safeqr.app.constants.CommonConstants.*;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
-import com.safeqr.app.qrcode.dto.RedirectCountResponse;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
-import com.safeqr.app.qrcode.service.RedirectCountService;
 import com.safeqr.app.qrcode.service.URLVerificationService;
 import com.safeqr.app.qrcode.service.VirusTotalService;
 import org.slf4j.Logger;
@@ -34,9 +32,6 @@ public class QRCodeTypeController {
 
     @Autowired
     private VirusTotalService virusTotalService;
-
-    @Autowired
-    private RedirectCountService redirectCountService;
 
     @GetMapping(value = API_URL_QRCODE_GET_ALL)
     public ResponseEntity<List<QRCodeTypeEntity>> getAllTypes() {
@@ -79,9 +74,5 @@ public class QRCodeTypeController {
         }
     }
 
-    @PostMapping(API_URL_QRCODE_REDIRECT_COUNT)
-    public ResponseEntity<RedirectCountResponse> checkRedirects(@RequestBody QRCodePayload payload) {
-        return ResponseEntity.ok(redirectCountService.countRedirects(payload).block());
-    }
 
 }

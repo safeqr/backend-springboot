@@ -27,6 +27,8 @@ public final class SMSModel extends QRCodeModel<SMSEntity> {
     @Override
     public void setDetails() {
         details = SMSEntity.builder().qrCodeId(data.getId()).build();
+
+        smsVerificationService.parseSMSString(details, data.getContents());
         // Insert into sms table
         smsVerificationService.insertDB(details);
     }

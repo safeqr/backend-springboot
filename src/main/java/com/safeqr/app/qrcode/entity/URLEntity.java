@@ -23,6 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class URLEntity {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Column(name="classifications")
     private String classifications;
 
