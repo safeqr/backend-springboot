@@ -2,7 +2,7 @@ package com.safeqr.app.user.service;
 
 import com.safeqr.app.exceptions.ResourceAlreadyExists;
 import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
-import com.safeqr.app.qrcode.entity.ScanBookmarkEntity;
+
 import com.safeqr.app.qrcode.entity.ScanHistoryEntity;
 import com.safeqr.app.qrcode.repository.ScanBookmarkRepository;
 import com.safeqr.app.qrcode.repository.ScanHistoryRepository;
@@ -14,7 +14,7 @@ import com.safeqr.app.user.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

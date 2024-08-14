@@ -16,4 +16,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExists e) {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(InvalidFormatExceptions.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatExceptions e) {
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
+    }
 }
