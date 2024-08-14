@@ -4,7 +4,6 @@ import static com.safeqr.app.constants.APIConstants.*;
 import static com.safeqr.app.constants.CommonConstants.*;
 import com.safeqr.app.qrcode.dto.request.QRCodePayload;
 import com.safeqr.app.qrcode.dto.RedirectCountResponse;
-import com.safeqr.app.qrcode.dto.URLVerificationResponse;
 import com.safeqr.app.qrcode.dto.response.BaseScanResponse;
 import com.safeqr.app.qrcode.entity.QRCodeTypeEntity;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
