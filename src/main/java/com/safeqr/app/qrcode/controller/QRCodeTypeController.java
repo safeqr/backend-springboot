@@ -50,11 +50,6 @@ public class QRCodeTypeController {
         return ResponseEntity.ok(qrCodeTypeService.scanQRCode(userId, payload));
     }
 
-    @PostMapping(API_URL_QRCODE_DETECT)
-    public ResponseEntity<String> detectType(@RequestBody QRCodePayload payload) {
-        return ResponseEntity.ok(qrCodeTypeService.detectType(payload).block());
-    }
-
     @PostMapping(value = API_URL_QRCODE_VERIFY_URL, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<BaseScanResponse> verifyURL(@RequestBody QRCodePayload payload,
                                                       @RequestHeader(required = false, name = HEADER_USER_ID) String userId) {

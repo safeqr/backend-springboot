@@ -25,7 +25,8 @@ public class QRCodeFactoryProvider {
             case QR_CODE_TYPE_EMAIL -> applicationContext.getBean(EmailFactory.class).create(scannedQRCodeEntity);
             case QR_CODE_TYPE_WIFI -> applicationContext.getBean(WifiFactory.class).create(scannedQRCodeEntity);
             case DEFAULT_QR_CODE_TYPE -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity);
-            default -> throw new IllegalArgumentException("Unsupported QR code type: " + scannedQRCodeEntity.getInfo().getType());
+            //default -> throw new IllegalArgumentException("Unsupported QR code type: " + scannedQRCodeEntity.getInfo().getType());
+            default -> applicationContext.getBean(TextFactory.class).create(scannedQRCodeEntity);
         };
     }
 }
