@@ -88,41 +88,33 @@ public class QRCodeTypeService {
         String data = payload.getData();
         logger.info("scanQRCode: userId={}, data={}", userId, data);
 
-        // Get the QR Code Type
-        QRCodeTypeEntity qrType = getQRCodeType(data);
-
-        // Insert the QR Code into main qrcode table
-        QRCodeEntity scannedQR = qrCodeRepository.save(QRCodeEntity.builder()
-                .userId(userId)
-                .contents(data)
-                .info(qrType)
-                .createdAt(LocalDateTime.now())
-                .build());
+        QRCodeModel<?> qrCodeModel = scanAndClassify(userId, data);
+        UUID qrId = qrCodeModel.getData().getId();
 
         // Insert into Scan History table if userId is not null
-        logger.info("scanQRCode: scannedQR new ID={}", scannedQR.getId());
+        logger.info("scanQRCode: scannedQR new ID={}", qrId);
         if (userId != null) {
             scanHistoryRepository.save(ScanHistoryEntity.builder()
-                    .qrCodeId(scannedQR.getId())
+                    .qrCodeId(qrId)
                     .userId(userId)
                     .scanStatus(ScanHistoryEntity.ScanStatus.ACTIVE)
                     .build());
         }
-        // Create the QR Code Instance based on the QR Code Type & insert into the respective table
-        QRCodeModel<?> qrCodeModel = qrCodeFactoryProvider.createQRCodeInstance(scannedQR);
-        qrCodeModel.setDetails();
-        // Get classifications based on verifications
-        scannedQR.setResult(qrCodeModel.retrieveClassification());
-        // update result category in qrcode table
-        qrCodeRepository.save(scannedQR);
 
         return BaseScanResponse.builder().qrcode(qrCodeModel).build();
     }
 
+    // Scan decoded contents from email message
     @Transactional
     public QRCodeModel<?> scanGmailDecodedContents(String userId, String data) {
         logger.info("Scan Gmail content: userId={}, data={}", userId, data);
 
+        return scanAndClassify(userId, data);
+    }
+
+    // ScanAndClassify
+
+    private QRCodeModel<?> scanAndClassify(String userId, String data) {
         // Get the QR Code Type
         QRCodeTypeEntity qrType = getQRCodeType(data);
 
@@ -143,34 +135,12 @@ public class QRCodeTypeService {
 
         return qrCodeModel;
     }
+
     // Returns Default type as text if it does not fit into any of the category
     private QRCodeTypeEntity getQRCodeType(String data) {
         return configs.stream()
                 .filter(config -> data.toLowerCase().startsWith(config.getPrefix().toLowerCase()))
                 .findFirst()
                 .orElse(defaultQRCodeTypeEntity);
-    }
-
-    public Mono<String> detectType(QRCodePayload payload) {
-        String data = payload.getData();
-
-        for (QRCodeTypeEntity config : configs) {
-            if (data.startsWith(config.getPrefix())) {
-                if ("URL".equals(config.getType())) {
-                    try
-                    {
-                        return safeBrowsingService.isSafeUrl(data)
-                                .map(isSafe -> isSafe ? "Safe URL" : "Unsafe URL");
-                    } catch (NoSuchAlgorithmException e)
-                    {
-                        // TODO Auto-generated catch block
-                        return Mono.just("Error checking URL safety: " + e.getMessage());
-                    }
-                }
-                return Mono.just(config.getType());
-            }
-        }
-
-        return Mono.just("Unknown");
     }
 }

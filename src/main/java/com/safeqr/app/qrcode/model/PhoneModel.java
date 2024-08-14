@@ -27,6 +27,8 @@ public final class PhoneModel extends QRCodeModel<PhoneEntity> {
     @Override
     public void setDetails() {
         details = PhoneEntity.builder().qrCodeId(data.getId()).build();
+
+        phoneVerificationService.parsePhoneString(details, data.getContents());
         // Insert into phone table
         phoneVerificationService.insertDB(details);
     }

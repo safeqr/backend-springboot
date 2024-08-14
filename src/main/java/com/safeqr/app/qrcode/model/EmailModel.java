@@ -27,6 +27,8 @@ public final class EmailModel extends QRCodeModel<EmailEntity> {
     @Override
     public void setDetails() {
         details = EmailEntity.builder().qrCodeId(data.getId()).build();
+
+        emailVerificationService.parseEmailString(details, data.getContents());
         // Insert into email table
         emailVerificationService.insertDB(details);
     }

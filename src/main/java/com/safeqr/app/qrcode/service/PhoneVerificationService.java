@@ -1,5 +1,6 @@
 package com.safeqr.app.qrcode.service;
 
+import com.safeqr.app.exceptions.InvalidFormatExceptions;
 import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
 import com.safeqr.app.qrcode.entity.PhoneEntity;
 import com.safeqr.app.qrcode.repository.PhoneRepository;
@@ -26,6 +27,25 @@ public class PhoneVerificationService {
     }
     public void insertDB(PhoneEntity phoneEntity) {
         phoneRepository.save(phoneEntity);
+    }
+
+    public void parsePhoneString(PhoneEntity phoneEntity, String phoneString) {
+        // Validate the string format
+        if (phoneString == null || phoneString.isEmpty()) {
+            throw new InvalidFormatExceptions("Phone string cannot be null or empty.");
+        }
+
+        // Remove the "TEL:" prefix
+        String phoneNumber = phoneString.substring(4);
+
+        // Further validation for phone number can be done here (optional)
+        if (phoneNumber.matches("\\+?[0-9]*")) {
+            // Populate the PhoneEntity object
+            phoneEntity.setPhone(phoneNumber);
+        } else {
+            throw new InvalidFormatExceptions("Invalid phone number format.");
+        }
+
     }
 
 }
