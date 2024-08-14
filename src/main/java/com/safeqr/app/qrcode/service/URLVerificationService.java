@@ -64,6 +64,7 @@ public class URLVerificationService {
             ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".bin", ".run"
     ).collect(Collectors.toUnmodifiableSet());
 
+
     // Checks if the URL has executable file
     public String hasExecutableFile(String urlPath) {
         return Stream.of(urlPath)
