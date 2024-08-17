@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public class GmailEmailEntity {
     private String threadId;
 
     @Column(name = "history_id")
-    private Long historyId;
+    private BigInteger historyId;
 
     @Column(name= "subject")
     private String subject;

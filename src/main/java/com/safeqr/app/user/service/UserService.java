@@ -54,6 +54,13 @@ public class UserService {
                 .status(userEntity.getStatus())
                 .build();
     }
+    public UserEntity getUserByIdForGmail(String userId){
+        return userRepository.findById(userId)
+                .orElseThrow(()-> new ResourceNotFoundExceptions("User id not found: " + userId));
+    }
+    public UserEntity updateUserEntity(UserEntity userEntity) {
+        return userRepository.save(userEntity);
+    }
     public List<ScannedHistoriesDto> getUserScannedHistories(String userId) {
         return scanHistoryRepository.findAllQRCodesByUserId(userId);
     }

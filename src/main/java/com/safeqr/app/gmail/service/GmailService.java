@@ -33,6 +33,7 @@ import com.safeqr.app.gmail.repository.GmailEmailRespository;
 import com.safeqr.app.gmail.repository.GmailUrlsRespository;
 import com.safeqr.app.qrcode.model.QRCodeModel;
 import com.safeqr.app.qrcode.service.QRCodeTypeService;
+import com.safeqr.app.user.entity.UserEntity;
 import com.safeqr.app.user.service.UserService;
 import com.safeqr.app.utils.DateParsingUtils;
 import org.apache.commons.codec.binary.Base64;
@@ -52,6 +53,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.Thread;
+import java.math.BigInteger;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -148,41 +150,64 @@ public class GmailService {
     public ScannedGmailResponseDto getEmail(String userId, String accessToken, String refreshToken) throws IOException {
         Gmail service = refreshAndGetGmailService(accessToken, refreshToken);
         logger.info("Gmail service initialized: {}", service);
-
         List<EmailMessage> emailMessagesList = new ArrayList<>();
         String meUserId = "me";
         String nextPageToken = null;
-        // Fetching email messages with page token and setting max results, Default value is 100.
-        do {
+        UserEntity userEntity = userService.getUserByIdForGmail(userId);
+        BigInteger historyId = userEntity.getGmailHistoryId();
 
-//            ListHistoryResponse historyResponse = service.users().history().list(meUserId)
-//                    .setStartHistoryId(BigInteger.valueOf(689335))
-//                    .execute();
-//
-//            List<History> historyList = historyResponse.getHistory();
-//
-//            for (History history : historyList) {
-//                logger.info("History Id: {}, Message Id: {}, Message Snippet: {}", history.getId(), history.getMessages().get(0).getId(), history.getMessages().get(0).getHistoryId());
-//            }
-            ListMessagesResponse listResponse = fetchMessages(service, meUserId, nextPageToken);
-            List<Message> messages = listResponse.getMessages();
-            nextPageToken = listResponse.getNextPageToken();
+        // Fetch history if historyId is not 0 (Default db value)
+        if (historyId.compareTo(BigInteger.ZERO) != 0) {
+            logger.info("HistoryId from db: {}", historyId);
 
-            // Iterate all the messages and save to gmail db only if it has a valid QR code.
-            for (Message message : messages) {
-                EmailMessage emailMessage = processMessage(service, meUserId, message);
-                if (emailMessage != null) {
-                    emailMessagesList.add(emailMessage);
-                    // Save email message to database.
-                    saveEmailMessageAndScanQRCode(userId, emailMessage);
+            ListHistoryResponse historyResponse = service.users().history().list(meUserId)
+                    .setStartHistoryId(historyId)
+                    .execute();
+            List<History> historyList = historyResponse.getHistory();
+            if (historyList != null) {
+                for (History history : historyList) {
+                    logger.info("History Response - History Id: {}, Message Id: {}", history.getId(), history.getMessages().get(0).getId());
+                    List<Message> messages = history.getMessages();
+                    for (Message message : messages) {
+                        EmailMessage emailMessage = processMessage(service, meUserId, message);
+                        if (emailMessage != null) {
+                            emailMessagesList.add(emailMessage);
+                            saveEmailMessageAndScanQRCode(userId, emailMessage);
+                        }
+                    }
                 }
             }
-        } while (nextPageToken != null);
+        } else {
+            // Fetching email messages with page token and setting max results, Default value is 100.
+            do {
+                ListMessagesResponse listResponse = fetchMessages(service, meUserId, nextPageToken);
+                List<Message> messages = listResponse.getMessages();
+                nextPageToken = listResponse.getNextPageToken();
+
+                // Iterate all the messages and save to gmail db only if it has a valid QR code.
+                for (Message message : messages) {
+                    EmailMessage emailMessage = processMessage(service, meUserId, message);
+                    if (emailMessage != null) {
+                        emailMessagesList.add(emailMessage);
+                        // Save email message to database.
+                        saveEmailMessageAndScanQRCode(userId, emailMessage);
+                    }
+                }
+            } while (nextPageToken != null);
+        }
 
         // Update user's history id.
-        // TODO: Update user's history id.
+        BigInteger latestHistoryId = getLatestHistoryId(service, meUserId);
+        if (latestHistoryId != null) {
+            userEntity.setGmailHistoryId(latestHistoryId);
+            userService.updateUserEntity(userEntity);
+        }
 
         return new ScannedGmailResponseDto(emailMessagesList);
+    }
+    private BigInteger getLatestHistoryId(Gmail service, String userId) throws IOException {
+        Profile profile = service.users().getProfile(userId).execute();
+        return profile.getHistoryId();
     }
     // Save email message to database and scan QR code.
     private void saveEmailMessageAndScanQRCode(String userId, EmailMessage emailMessage) {
@@ -207,7 +232,7 @@ public class GmailService {
                     .userId(userId)
                     .messageId(emailMessage.getMessageId())
                     .threadId(emailMessage.getThreadId())
-                    .historyId(Long.valueOf(emailMessage.getHistoryId()))
+                    .historyId(new BigInteger(emailMessage.getHistoryId()))
                     .subject(emailMessage.getSubject())
                     .dateReceived(dateReceived)
                     .active(emailMessage.getActive())
@@ -351,29 +376,42 @@ public class GmailService {
                 .execute();
     }
     // Processing email message and returning EmailMessage object if it has a valid QR code.
-    private EmailMessage processMessage(Gmail service, String userId, Message message) throws IOException {
-        message = service.users().messages().get(userId, message.getId()).setFormat("full").execute();
-        List<MessagePart> parts = message.getPayload().getParts();
-        Set<String> attachmentIds = new HashSet<>();
-        Set<String> imageUrls = new HashSet<>();
-        processPartsRecursively(parts, attachmentIds, imageUrls);
+    private EmailMessage processMessage(Gmail service, String userId, Message message) {
+        try {
+            message = service.users().messages().get(userId, message.getId()).setFormat("full").execute();
+            List<MessagePart> parts = message.getPayload().getParts();
+            Set<String> attachmentIds = new HashSet<>();
+            Set<String> imageUrls = new HashSet<>();
+            processPartsRecursively(parts, attachmentIds, imageUrls);
 
-        if (attachmentIds.isEmpty() && imageUrls.isEmpty()) {
-            return null;
+            if (attachmentIds.isEmpty() && imageUrls.isEmpty()) {
+                return null;
+            }
+
+            String subject = getHeader(message, "Subject");
+            String emailDate = getHeader(message, "Date");
+            logger.info("Email Subject: {}", subject);
+            logger.info("Message ID: {}", message.getId());
+            logger.info("History ID: {}", message.getHistoryId());
+
+            EmailMessage emailMessage = new EmailMessage(message.getId(), message.getThreadId(), subject, String.valueOf(message.getHistoryId()), emailDate);
+
+            processAttachments(service, message.getId(), parts, attachmentIds, emailMessage);
+            processImageUrls(imageUrls, emailMessage);
+
+            return emailMessage.hasQRCodes() ? emailMessage : null;
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                logger.warn("Message with ID {} not found. It may have been deleted.", message.getId());
+                return null;
+            } else {
+                logger.error("Error processing message with ID {}: {}", message.getId(), e.getMessage());
+                throw new RuntimeException("Error processing Gmail message", e);
+            }
+        } catch (IOException e) {
+            logger.error("IO error processing message with ID {}: {}", message.getId(), e.getMessage());
+            throw new RuntimeException("IO error processing Gmail message", e);
         }
-
-        String subject = getHeader(message, "Subject");
-        String emailDate = getHeader(message, "Date");
-        logger.info("Email Subject: {}", subject);
-        logger.info("Message ID: {}", message.getId());
-        logger.info("History ID: {}", message.getHistoryId());
-
-        EmailMessage emailMessage = new EmailMessage(message.getId(), message.getThreadId(), subject, String.valueOf(message.getHistoryId()), emailDate);
-
-        processAttachments(service, message.getId(), parts, attachmentIds, emailMessage);
-        processImageUrls(imageUrls, emailMessage);
-
-        return emailMessage.hasQRCodes() ? emailMessage : null;
     }
     // Process all the attachments.
     private void processAttachments(Gmail service, String messageId, List<MessagePart> parts, Set<String> attachmentIds, EmailMessage emailMessage) throws IOException {

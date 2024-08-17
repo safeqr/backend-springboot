@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import lombok.*;
 import org.hibernate.annotations.Type;
 
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -35,5 +36,5 @@ public class UserEntity {
     private String status;
 
     @Column(name = "gmail_history_id")
-    private Long gmailHistoryId;
+    private BigInteger gmailHistoryId = BigInteger.ZERO;
 }
