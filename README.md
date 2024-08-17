@@ -6,7 +6,7 @@ This is a Spring Boot project built with Java 17. This guide will help you set u
 
 Before you begin, ensure you have the following software installed on your system:
 
-- **Java 17**: This project requires Java 17. You can download it from the [official Oracle website](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html) or install it via a package manager (e.g., `sdkman` or `brew` on macOS).
+- **Java 17**: This project requires Java 17. You can download it from the [official Oracle website](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) or install it via a package manager (e.g., `sdkman` or `brew` on macOS).
 - **Maven 3.6+**: Apache Maven is used to manage the project's dependencies. You can download Maven from the [official Apache website](https://maven.apache.org/download.cgi) or install it via a package manager.
 
 ## Installation
