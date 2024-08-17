@@ -2,6 +2,7 @@ package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,4 +32,8 @@ public class SMSEntity {
 
     private String phone;
     private String message;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Column(name = "keyword_detected")
+    private String keywordDetected;
 }

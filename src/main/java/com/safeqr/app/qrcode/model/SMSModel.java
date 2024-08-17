@@ -38,6 +38,6 @@ public final class SMSModel extends QRCodeModel<SMSEntity> {
     }
     @Override
     public String retrieveClassification() {
-        return "";
+        return smsVerificationService.getClassification(details);
     }
 }
