@@ -429,6 +429,16 @@ public class URLVerificationService {
 
     // Get Classification using ML Model
     public String getClassification(URLModel urlModel){
+        String content = urlModel.getData().getContents();
+        // if in whitelist, return Benign and Safe
+        for (String domain : WHITELIST_DOMAINS) {
+            if (content.contains(domain)) {
+                // If in whitelist, set category to BENIGN and return SAFE
+                urlModel.getDetails().setClassifications(CAT_BENIGN);
+                return CLASSIFY_SAFE;
+            }
+        }
+
         // Call ML model
         String category = predictionService.predict(urlModel);
 
@@ -452,4 +462,12 @@ public class URLVerificationService {
         }
         return CLASSIFY_UNSAFE;
     }
+
+    // Static array for whitelist domains
+    private static final List<String> WHITELIST_DOMAINS = Arrays.asList(
+            "safeqr.github.io/marketing",
+            "uow.edu.au",
+            "nus.edu.sg",
+            "sim.edu.sg"
+    );
 }
