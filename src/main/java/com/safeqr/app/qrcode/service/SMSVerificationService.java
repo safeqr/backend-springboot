@@ -99,13 +99,17 @@ public class SMSVerificationService {
                 if (lowerCaseSms.contains(keyword)) {
                     logger.info("Phishing keyword detected: {}", keyword);
                     smsEntity.setKeywordDetected("Potential Phishing - " + category);
-                    return CLASSIFY_WARNING;
+                    return checkPhoneNumber(smsEntity.getPhone()).equals(CLASSIFY_WARNING) ?
+                            CLASSIFY_WARNING :
+                            CLASSIFY_UNSAFE;
                 }
             }
         }
 
         // If no phishing keywords are found, sent for local phone number checks
-        return checkPhoneNumber(smsEntity.getPhone());
+        return checkPhoneNumber(smsEntity.getPhone()).equals(CLASSIFY_UNSAFE) ?
+                CLASSIFY_WARNING :
+                CLASSIFY_SAFE;
     }
 
     private String checkPhoneNumber(String  phoneNumber) {
@@ -121,7 +125,7 @@ public class SMSVerificationService {
 
         // Check if it's a valid Singapore mobile or landline number
         if (phoneNumber.matches("^[689]\\d{7}$") && (phoneNumber.startsWith("8") || phoneNumber.startsWith("9"))) {
-                return CLASSIFY_SAFE;
+                return CLASSIFY_WARNING;
         }
 
         // If it doesn't match mobile
