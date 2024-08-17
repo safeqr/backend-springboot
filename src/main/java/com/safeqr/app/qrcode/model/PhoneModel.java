@@ -38,6 +38,6 @@ public final class PhoneModel extends QRCodeModel<PhoneEntity> {
     }
     @Override
     public String retrieveClassification() {
-        return "";
+        return phoneVerificationService.checkPhoneNumber(details);
     }
 }

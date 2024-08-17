@@ -2,6 +2,7 @@ package com.safeqr.app.qrcode.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,4 +31,8 @@ public class PhoneEntity {
     private UUID qrCodeId;
 
     private String phone;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Column(name = "remarks")
+    private String remarks;
 }

@@ -2,6 +2,7 @@ package com.safeqr.app.qrcode.service;
 
 import com.safeqr.app.exceptions.InvalidFormatExceptions;
 import com.safeqr.app.exceptions.ResourceNotFoundExceptions;
+import com.safeqr.app.qrcode.entity.PhoneEntity;
 import com.safeqr.app.qrcode.entity.SMSEntity;
 import com.safeqr.app.qrcode.repository.SMSRepository;
 import org.slf4j.Logger;
@@ -12,8 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-import static com.safeqr.app.constants.CommonConstants.CLASSIFY_SAFE;
-import static com.safeqr.app.constants.CommonConstants.CLASSIFY_WARNING;
+import static com.safeqr.app.constants.CommonConstants.*;
 
 @Service
 public class SMSVerificationService {
@@ -84,7 +84,6 @@ public class SMSVerificationService {
             throw new InvalidFormatExceptions("Invalid SMSTO format. Expected format: SMSTO:<phone>:<message>");
         }
     }
-    @Transactional
     public String getClassification (SMSEntity smsEntity) {
 
         String lowerCaseSms = smsEntity.getMessage().toLowerCase();
@@ -105,8 +104,28 @@ public class SMSVerificationService {
             }
         }
 
-        // If no phishing keywords are found
-        return CLASSIFY_SAFE;
+        // If no phishing keywords are found, sent for local phone number checks
+        return checkPhoneNumber(smsEntity.getPhone());
+    }
+
+    private String checkPhoneNumber(String  phoneNumber) {
+        // Remove any spaces, dashes, parentheses, and trim the ends
+        phoneNumber = phoneNumber.replaceAll("[\\s\\-()]", "").trim();
+
+        // Check if the number starts with +65 or just 65
+        if (phoneNumber.startsWith("+65")) {
+            phoneNumber = phoneNumber.substring(3);  // Remove the "+65"
+        } else if (phoneNumber.startsWith("65")) {
+            phoneNumber = phoneNumber.substring(2);  // Remove the "65"
+        }
+
+        // Check if it's a valid Singapore mobile or landline number
+        if (phoneNumber.matches("^[689]\\d{7}$") && (phoneNumber.startsWith("8") || phoneNumber.startsWith("9"))) {
+                return CLASSIFY_SAFE;
+        }
+
+        // If it doesn't match mobile
+        return CLASSIFY_UNSAFE;
     }
 
 }

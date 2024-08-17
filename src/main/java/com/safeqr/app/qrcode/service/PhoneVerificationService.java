@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static com.safeqr.app.constants.CommonConstants.*;
+
 @Service
 public class PhoneVerificationService {
     private final PhoneRepository phoneRepository;
@@ -46,6 +48,32 @@ public class PhoneVerificationService {
             throw new InvalidFormatExceptions("Invalid phone number format.");
         }
 
+    }
+
+    public String checkPhoneNumber(PhoneEntity phoneEntity) {
+        // Remove any spaces, dashes, parentheses, and trim the ends
+        String phoneNumber = phoneEntity.getPhone().replaceAll("[\\s\\-()]", "").trim();
+
+        // Check if the number starts with +65 or just 65
+        if (phoneNumber.startsWith("+65")) {
+            phoneNumber = phoneNumber.substring(3);  // Remove the "+65"
+        } else if (phoneNumber.startsWith("65")) {
+            phoneNumber = phoneNumber.substring(2);  // Remove the "65"
+        }
+
+        // Check if it's a valid Singapore mobile or landline number
+        if (phoneNumber.matches("^[689]\\d{7}$")) {
+            if (phoneNumber.startsWith("8") || phoneNumber.startsWith("9")) {
+                phoneEntity.setRemarks("Singapore mobile number - This number has not been scanned for scam. Please do not divulge your personal information.");
+            } else if (phoneNumber.startsWith("6")) {
+                phoneEntity.setRemarks("Singapore landline number - This phone number has not been scanned for scam. Please do not divulge your personal information.");
+            }
+            return CLASSIFY_UNKNOWN;
+        }
+
+        // If it doesn't match mobile or landline pattern
+        phoneEntity.setRemarks("Warning: This is either an overseas number or an invalid Singapore number. Please exercise caution.");
+        return CLASSIFY_WARNING;
     }
 
 }
