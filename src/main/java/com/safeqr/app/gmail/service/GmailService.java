@@ -155,7 +155,7 @@ public class GmailService {
         String nextPageToken = null;
         UserEntity userEntity = userService.getUserByIdForGmail(userId);
         BigInteger historyId = userEntity.getGmailHistoryId();
-
+        logger.info("history id: {}", historyId);
         // Fetch history if historyId is not 0 (Default db value)
         if (historyId.compareTo(BigInteger.ZERO) != 0) {
             logger.info("HistoryId from db: {}", historyId);
