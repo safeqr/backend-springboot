@@ -125,13 +125,20 @@ public class GmailService {
 
     private Gmail refreshAndGetGmailService(String accessToken, String refreshToken) throws IOException {
         try {
-            return getGmailService(accessToken, refreshToken);
+            Gmail service = getGmailService(accessToken, refreshToken);
+            service.users().getProfile("me").execute();
+            logger.info("Gmail service authenticated with provided access token.");
+            return service;
         } catch (GoogleJsonResponseException e) {
             if (e.getStatusCode() == 401) {
-                logger.info("Access token expired. Refreshing token...");
+                logger.info("Access token expired. Refreshing...");
                 String newAccessToken = refreshAccessToken(refreshToken);
-                return getGmailService(newAccessToken, refreshToken);
+                Gmail service = getGmailService(newAccessToken, refreshToken);
+                service.users().getProfile("me").execute();
+                logger.info("Gmail service authenticated with refreshed token.");
+                return service;
             }
+            logger.error("Failed to authenticate with Gmail API", e);
             throw e;
         }
     }
