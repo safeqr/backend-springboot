@@ -1,10 +1,7 @@
 package com.safeqr.app.gmail.service;
 
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
-import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.*;
 
-import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.GenericUrl;
@@ -36,6 +33,7 @@ import com.safeqr.app.qrcode.service.QRCodeTypeService;
 import com.safeqr.app.user.entity.UserEntity;
 import com.safeqr.app.user.service.UserService;
 import com.safeqr.app.utils.DateParsingUtils;
+import io.hypersistence.utils.common.StringUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -66,6 +64,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.http.auth.AuthenticationException;
 
 import static com.google.api.client.googleapis.auth.oauth2.GoogleOAuthConstants.TOKEN_SERVER_URL;
 import static com.safeqr.app.constants.APIConstants.APPLICATION_NAME;
@@ -116,14 +115,52 @@ public class GmailService {
                 .build();
     }
     // Renew the access token if it has expired using the refresh token.
-    private String refreshAccessToken(String refreshToken) throws IOException {
-        TokenResponse response = new GoogleRefreshTokenRequest(
-                httpTransport, JSON_FACTORY, refreshToken, clientId, clientSecret)
-                .execute();
-        return response.getAccessToken();
+    private String refreshAccessToken(String refreshToken) throws IOException, AuthenticationException {
+        logger.info("Refresh token in refreshAccessToken: {}", refreshToken);
+        if (StringUtils.isBlank(refreshToken)) {
+            logger.error("Refresh token is null or empty");
+            throw new AuthenticationException("Invalid refresh token");
+        }
+
+        int maxRetries = 3;
+        int retryCount = 0;
+        while (retryCount < maxRetries) {
+            try {
+                logger.info("Attempting to refresh access token (attempt {})", retryCount + 1);
+                TokenResponse response = new GoogleRefreshTokenRequest(
+                        httpTransport, JSON_FACTORY, refreshToken, clientId, clientSecret)
+                        .execute();
+                String newAccessToken = response.getAccessToken();
+                logger.info("Access token refreshed successfully");
+                return newAccessToken;
+            } catch (TokenResponseException e) {
+                logger.error("Failed to refresh access token. Status code: {}", e.getStatusCode());
+                logger.error("Error message: {}", e.getDetails().getError());
+                logger.error("Error description: {}", e.getDetails().getErrorDescription());
+
+                if (e.getStatusCode() == 401) {
+                    logger.warn("Unauthorized error. The refresh token may be invalid or revoked.");
+                    throw new AuthenticationException("Refresh token is invalid. User needs to re-authenticate.");
+                }
+
+                if (++retryCount >= maxRetries) {
+                    logger.error("Max retries reached. Unable to refresh access token.");
+                    throw e;
+                }
+
+                // Implement exponential backoff
+                try {
+                    Thread.sleep((long) (Math.pow(2, retryCount) * 1000));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Token refresh interrupted", ie);
+                }
+            }
+        }
+        throw new IOException("Failed to refresh access token after " + maxRetries + " attempts");
     }
 
-    private Gmail refreshAndGetGmailService(String accessToken, String refreshToken) throws IOException {
+    private Gmail refreshAndGetGmailService(String accessToken, String refreshToken) throws IOException, AuthenticationException {
         try {
             Gmail service = getGmailService(accessToken, refreshToken);
             service.users().getProfile("me").execute();
@@ -151,10 +188,12 @@ public class GmailService {
             CompletableFuture.completedFuture(result);
         } catch (IOException e) {
             logger.error("Error processing Gmail", e);
+        } catch (AuthenticationException e) {
+            logger.error("Error Authenticating", e);
         }
     }
     // Scan all emails in the user's inbox.
-    public ScannedGmailResponseDto getEmail(String userId, String accessToken, String refreshToken) throws IOException {
+    public ScannedGmailResponseDto getEmail(String userId, String accessToken, String refreshToken) throws IOException, AuthenticationException {
         Gmail service = refreshAndGetGmailService(accessToken, refreshToken);
         logger.info("Gmail service initialized: {}", service);
         List<EmailMessage> emailMessagesList = new ArrayList<>();
