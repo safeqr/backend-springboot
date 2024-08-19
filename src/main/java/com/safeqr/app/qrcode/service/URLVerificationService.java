@@ -468,6 +468,7 @@ public class URLVerificationService {
             "safeqr.github.io/marketing",
             "uow.edu.au",
             "nus.edu.sg",
-            "sim.edu.sg"
+            "sim.edu.sg",
+            "sp.edu.sg"
     );
 }
