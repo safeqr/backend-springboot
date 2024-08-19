@@ -35,6 +35,9 @@ public class UserEntity {
     private List<String> roles;
     private String status;
 
+    @Column(name = "source")
+    private String source;
+
     @Column(name = "gmail_history_id")
     private BigInteger gmailHistoryId = BigInteger.ZERO;
 }
