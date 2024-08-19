@@ -469,6 +469,7 @@ public class URLVerificationService {
             "uow.edu.au",
             "nus.edu.sg",
             "sim.edu.sg",
-            "sp.edu.sg"
+            "sp.edu.sg",
+            "go.gov.sg"
     );
 }

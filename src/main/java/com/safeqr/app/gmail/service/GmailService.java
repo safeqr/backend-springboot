@@ -411,6 +411,7 @@ public class GmailService {
                 emailMessageList.add(emailMessage);
 
             });
+            emailMessageList.sort(Comparator.comparing(EmailMessage::getDate, Comparator.nullsLast(Comparator.reverseOrder())));
         }
         return ScannedGmailResponseDto.builder().messages(emailMessageList).build();
     }
