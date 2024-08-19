@@ -48,6 +48,7 @@ public class UserService {
                 .id(userEntity.getId())
                 .email(userEntity.getEmail())
                 .name(userEntity.getName())
+                .source(userEntity.getSource())
                 .dateJoined(userEntity.getDateCreated())
                 .dateUpdated(userEntity.getDateUpdated())
                 .roles(userEntity.getRoles())
