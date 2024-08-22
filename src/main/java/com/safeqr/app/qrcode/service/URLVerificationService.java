@@ -61,7 +61,7 @@ public class URLVerificationService {
     private static final Set<String> SUSPICIOUS_EXTENSIONS = Stream.of(
             ".exe", ".bat", ".sh", ".cmd", ".scr", ".pif", ".application", ".gadget",
             ".vb", ".vbs", ".js", ".jse", ".ws", ".wsf", ".msc", ".cpl",
-            ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".bin", ".run"
+            ".msi", ".ps1", ".py", ".pyc", ".pyo", ".rb", ".bin", ".run", "apk"
     ).collect(Collectors.toUnmodifiableSet());
 
 
@@ -469,7 +469,6 @@ public class URLVerificationService {
             "uow.edu.au",
             "nus.edu.sg",
             "sim.edu.sg",
-            "sp.edu.sg",
-            "go.gov.sg"
+            "sp.edu.sg"
     );
 }
